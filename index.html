@@ -17,7 +17,7 @@ header small{opacity:.9}
 nav{display:flex;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap}
 nav a{color:#fff;text-decoration:none;padding:8px 16px;border-radius:99px;background:#ffffff26;font-weight:600;font-size:14px}
 nav a.on{background:var(--y);color:#3a2a00}
-main{max-width:760px;margin:0 auto;padding:16px}
+main{max-width:900px;margin:0 auto;padding:16px}
 .card{background:var(--card);border:1px solid var(--bd);border-radius:18px;padding:16px;margin-bottom:14px;box-shadow:0 2px 8px #0000000d}
 .hero{display:flex;gap:14px;align-items:center;background:linear-gradient(135deg,#fff7d6,#ffe7a0);color:#3a2a00}
 .hero .em{font-size:56px}
@@ -57,15 +57,17 @@ input:focus,textarea:focus{box-shadow:0 0 0 3px #2f8f4730}
 .tag{letter-spacing:.2px}
 @media(max-width:420px){.bt{height:170px}}
 .pw{position:relative}.pw input{padding-inline-end:46px}.eye{position:absolute;inset-inline-end:4px;top:50%;transform:translateY(-50%);background:none;box-shadow:none;color:inherit;padding:8px;font-size:18px}.eye:hover{transform:translateY(-50%);box-shadow:none}
-</style></head><body>
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}.tb{background:var(--card);color:var(--tx);border:1px solid var(--bd);box-shadow:none;padding:8px 14px}.tb.on{background:var(--g);color:#fff}
+.kps{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.kp{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:10px;text-align:center;font-size:12px;color:var(--mu)}.kp b{display:block;font-size:19px;color:var(--g)}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;direction:ltr}.cdh{text-align:center;font-size:11px;color:var(--mu)}.cd{min-height:60px;background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:4px;font-size:10px;cursor:pointer;overflow:hidden;line-height:1.3}.cd b{display:block;font-size:13px}.cd.has{background:#d3f2da;color:#12582a}.cd.td{outline:2px solid var(--y)}
+.xt{border-collapse:collapse;font-size:12px;width:100%;direction:ltr}.xt th,.xt td{border:1px solid var(--bd);padding:5px 8px;white-space:nowrap;text-align:start}.xt th{background:var(--g);color:#fff}
+.phw{display:flex;direction:ltr}.phw span{display:flex;align-items:center;padding:0 12px;background:var(--bd);border-radius:12px 0 0 12px;font-weight:600}.phw input{border-radius:0 12px 12px 0}
+</style><script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script></head><body>
 <header>
 <h1 id="ttl">🌿 Portal</h1>
 <div class="ur">آبِ خضری — ہوا شفافی</div>
 <small id="sub"></small>
 <nav id="nav">
-<a href="#customer" data-v="customer" onclick="event.preventDefault();go('customer')"></a>
-<a href="#user" data-v="user" onclick="event.preventDefault();go('user')"></a>
-<a href="#admin" data-v="admin" onclick="event.preventDefault();go('admin')"></a>
 <a href="#" id="lg" onclick="event.preventDefault();toggleLang()">اردو / EN</a>
 </nav></header>
 <main id="app"></main>
@@ -79,7 +81,7 @@ bot:"bottles",fr:"free",tot:"Total",free2:"🎁 You get {f} free bottles (total 
 up:"🧑‍💼 User Panel",nw:"📥 New customer orders",sub:"Submit to Admin",wait:"⏳ Awaiting approval",gen:"✔ Generated orders",pr:"🖨️ Print",none:"No new orders 🌱",gnone:"Appears here once Admin approves",rej:"✖ Rejected",
 ap:"🛡️ Admin Panel",all:"Total orders",pend:"Pending",appr:"Approved",forap:"⏳ For approval",ok:"✔ Approve",no:"✖ Reject",hist:"📜 History",clear:"Nothing pending 🎉",
 t1:"Submitted to Admin",t2:"Approved — order generated for User ✔",t3:"Rejected",
-sl:"Order Slip",no2:"Order No.",dt:"Date",rate:"Rate",thanks:"Thank you 💚 Natural digestion, healthy life",sc:"Customer Order Portal",su:"User Portal",sa:"Admin Portal",mu2:"👥 Manage Users",nuid:"New user ID",add:"➕ Add user",rm:"Remove",np:"New password",rs:"Reset admin password",sv:"Save",done:"Saved ✔",dup:"This ID already exists",need:"Enter ID and password",nousr:"No users yet",lg:"Login",uid:"ID",pwd:"Password",si:"Sign in",bad:"Wrong ID or password",out:"Logout 🚪",la:"Admin Login",lu:"User Login",rp:"Order Report",lc:"Customer Login",rg:"Create customer account",newc:"New customer? Create account",have:"Already have an account? Sign in",myo:"📦 My orders",m_admin:"🛡️ Admins",m_user:"🧑‍💼 Users",m_customer:"🛒 Customers",upsert:"If the ID already exists, its password is changed",last:"Cannot remove the last admin",selfx:"You cannot remove yourself"},
+sl:"Order Slip",no2:"Order No.",dt:"Date",rate:"Rate",thanks:"Thank you 💚 Natural digestion, healthy life",sc:"Customer Order Portal",su:"User Portal",sa:"Admin Portal",mu2:"👥 Manage Users",nuid:"New user ID",add:"➕ Add user",rm:"Remove",np:"New password",rs:"Reset admin password",sv:"Save",done:"Saved ✔",dup:"This ID already exists",need:"Enter ID and password",nousr:"No users yet",lg:"Login",uid:"ID",pwd:"Password",si:"Sign in",bad:"Wrong ID or password",out:"Logout 🚪",la:"Admin Login",lu:"User Login",rp:"Order Report",day:"Day",mon:"Month",sd:"📊 Dashboard",ss:"📑 Sheet",sa2:"⏳ Approvals",sc2:"👥 Accounts",sp:"🔑 Password",sn:"📥 Orders",dx:"⬇️ Download Excel",nodl:"Download not available here",badph:"Enter a valid phone number (10 digits after +92)",od:"Orders",pwn:"🔑 Change my password",rev:"Revenue",st2:"Status",lc:"Customer Login",rg:"Create customer account",newc:"New customer? Create account",have:"Already have an account? Sign in",myo:"📦 My orders",m_admin:"🛡️ Admins",m_user:"🧑‍💼 Users",m_customer:"🛒 Customers",upsert:"If the ID already exists, its password is changed",last:"Cannot remove the last admin",selfx:"You cannot remove yourself"},
 ur:{ttl:"🌿 آبِ خضری پورٹل",c:"🛒 کسٹمر",u:"🧑‍💼 یوزر",a:"🛡️ ایڈمن",tag:"کھانے کے بعد ہاضمہ بہتر بنائیں · گیس، بدہضمی اور تیزابیت سے آرام · 100% قدرتی",per:"/ بوتل",o1:"12 بوتلوں پر 2 فری",o2:"120+ بوتلوں پر 200 روپے فی بوتل",place:"آرڈر کریں",nm:"آپ کا نام",ph:"فون نمبر",ad:"پتہ",bt:"بوتلیں",send:"✅ آرڈر بھیجیں",
 fill:"براہ کرم تمام معلومات بھریں",got:"🎉 <b>آرڈر مل گیا!</b><br>آرڈر نمبر:",thx:"ہماری ٹیم جلد آپ سے رابطہ کرے گی 💚",sent:"آرڈر بھیج دیا گیا ✔",
 new:"نیا (یوزر کے پاس)",submitted:"منظوری کا انتظار",approved:"منظور شدہ ✔",rejected:"مسترد",
@@ -87,7 +89,7 @@ bot:"بوتلیں",fr:"فری",tot:"کل",free2:"🎁 آپ کو {f} بوتلیں
 up:"🧑‍💼 یوزر پینل",nw:"📥 نئے کسٹمر آرڈرز",sub:"ایڈمن کو بھیجیں",wait:"⏳ منظوری کے انتظار میں",gen:"✔ تیار شدہ آرڈرز",pr:"🖨️ پرنٹ",none:"کوئی نیا آرڈر نہیں 🌱",gnone:"ایڈمن کی منظوری کے بعد یہاں نظر آئے گا",rej:"✖ مسترد",
 ap:"🛡️ ایڈمن پینل",all:"کل آرڈرز",pend:"زیرِ التوا",appr:"منظور شدہ",forap:"⏳ منظوری کے لیے",ok:"✔ منظور کریں",no:"✖ مسترد کریں",hist:"📜 ہسٹری",clear:"کوئی آرڈر باقی نہیں 🎉",
 t1:"ایڈمن کو بھیج دیا گیا",t2:"منظور — یوزر کے لیے آرڈر تیار ✔",t3:"مسترد کر دیا",
-sl:"آرڈر سلپ",no2:"آرڈر نمبر",dt:"تاریخ",rate:"ریٹ",thanks:"شکریہ 💚 قدرتی ہاضمہ، صحت مند زندگی",sc:"کسٹمر آرڈر پورٹل",su:"یوزر پورٹل",sa:"ایڈمن پورٹل",mu2:"👥 یوزرز کا انتظام",nuid:"نیا یوزر آئی ڈی",add:"➕ یوزر شامل کریں",rm:"ہٹائیں",np:"نیا پاسورڈ",rs:"ایڈمن پاسورڈ ری سیٹ کریں",sv:"محفوظ کریں",done:"محفوظ ہو گیا ✔",dup:"یہ آئی ڈی پہلے سے موجود ہے",need:"آئی ڈی اور پاسورڈ لکھیں",nousr:"ابھی کوئی یوزر نہیں",lg:"لاگ اِن",uid:"آئی ڈی",pwd:"پاسورڈ",si:"داخل ہوں",bad:"آئی ڈی یا پاسورڈ غلط ہے",out:"لاگ آؤٹ 🚪",la:"ایڈمن لاگ اِن",lu:"یوزر لاگ اِن",rp:"آرڈر رپورٹ",lc:"کسٹمر لاگ اِن",rg:"کسٹمر اکاؤنٹ بنائیں",newc:"نئے کسٹمر؟ اکاؤنٹ بنائیں",have:"اکاؤنٹ موجود ہے؟ لاگ اِن کریں",myo:"📦 میرے آرڈرز",m_admin:"🛡️ ایڈمنز",m_user:"🧑‍💼 یوزرز",m_customer:"🛒 کسٹمرز",upsert:"آئی ڈی پہلے سے ہو تو پاسورڈ بدل جائے گا",last:"آخری ایڈمن کو ہٹایا نہیں جا سکتا",selfx:"آپ خود کو نہیں ہٹا سکتے"}};
+sl:"آرڈر سلپ",no2:"آرڈر نمبر",dt:"تاریخ",rate:"ریٹ",thanks:"شکریہ 💚 قدرتی ہاضمہ، صحت مند زندگی",sc:"کسٹمر آرڈر پورٹل",su:"یوزر پورٹل",sa:"ایڈمن پورٹل",mu2:"👥 یوزرز کا انتظام",nuid:"نیا یوزر آئی ڈی",add:"➕ یوزر شامل کریں",rm:"ہٹائیں",np:"نیا پاسورڈ",rs:"ایڈمن پاسورڈ ری سیٹ کریں",sv:"محفوظ کریں",done:"محفوظ ہو گیا ✔",dup:"یہ آئی ڈی پہلے سے موجود ہے",need:"آئی ڈی اور پاسورڈ لکھیں",nousr:"ابھی کوئی یوزر نہیں",lg:"لاگ اِن",uid:"آئی ڈی",pwd:"پاسورڈ",si:"داخل ہوں",bad:"آئی ڈی یا پاسورڈ غلط ہے",out:"لاگ آؤٹ 🚪",la:"ایڈمن لاگ اِن",lu:"یوزر لاگ اِن",rp:"آرڈر رپورٹ",day:"دن",mon:"مہینہ",sd:"📊 ڈیش بورڈ",ss:"📑 شیٹ",sa2:"⏳ منظوری",sc2:"👥 اکاؤنٹس",sp:"🔑 پاسورڈ",sn:"📥 آرڈرز",dx:"⬇️ ایکسل ڈاؤن لوڈ",nodl:"یہاں ڈاؤن لوڈ ممکن نہیں",badph:"درست فون نمبر لکھیں (+92 کے بعد 10 ہندسے)",od:"آرڈرز",pwn:"🔑 میرا پاسورڈ بدلیں",rev:"آمدنی",st2:"حالت",lc:"کسٹمر لاگ اِن",rg:"کسٹمر اکاؤنٹ بنائیں",newc:"نئے کسٹمر؟ اکاؤنٹ بنائیں",have:"اکاؤنٹ موجود ہے؟ لاگ اِن کریں",myo:"📦 میرے آرڈرز",m_admin:"🛡️ ایڈمنز",m_user:"🧑‍💼 یوزرز",m_customer:"🛒 کسٹمرز",upsert:"آئی ڈی پہلے سے ہو تو پاسورڈ بدل جائے گا",last:"آخری ایڈمن کو ہٹایا نہیں جا سکتا",selfx:"آپ خود کو نہیں ہٹا سکتے"}};
 let L=localStorage.getItem("aab_lang")||"ur";
 const t=k=>T[L][k];
 function toggleLang(){L=L==="ur"?"en":"ur";try{localStorage.setItem("aab_lang",L)}catch(e){}render(true)}
@@ -95,7 +97,10 @@ const ROLES=["admin","user","customer"];
 const defC=()=>({admins:[{id:"admin",pw:"admin123"}],users:[{id:"user",pw:"user123"}],customers:[]});
 const fixC=c=>{if(!c)return null;if(c.admin&&!c.admins)c={admins:[c.admin],users:c.users||[],customers:c.customers||[]};return c.admins&&c.users?{admins:c.admins,users:c.users,customers:c.customers||[]}:null};
 const lst=r=>st.creds[r+"s"];
-const nid=(r,s)=>r==="customer"?s.replace(/[\s-]/g,""):s.trim();
+function normPh(s){let d=s.replace(/\D/g,"");if(d.startsWith("92")&&d.length>=12)d=d.slice(2);d=d.replace(/^0+/,"");return d?"+92"+d:""}
+const okPh=p=>/^\+92\d{10}$/.test(p);
+const phIn=(id,x="",v="")=>`<div class="phw"><span>+92</span><input id="${id}" type="tel" inputmode="numeric" dir="ltr" placeholder="3xx xxxxxxx" value="${esc(v)}" ${x}></div>`;
+const nid=(r,s)=>r==="customer"?normPh(s):s.trim();
 async function hp(id,p){try{const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode("aab-khizri|"+id+"|"+p));return"h:"+[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")}catch(e){return p}}
 async function pwOk(a,p){return a.pw.startsWith("h:")?a.pw===await hp(a.id,p):a.pw===p}
 const S={};try{S.r=sessionStorage.getItem("aab_role");S.i=sessionStorage.getItem("aab_id")}catch(e){}
@@ -110,6 +115,7 @@ let regOn=false;
 function toggleReg(){regOn=!regOn;render(true)}
 async function regCust(){const n=$("#rn").value.trim(),i=nid("customer",$("#ri").value),p=$("#rp").value;
   if(!n||!i||!p)return toast(t("need"));
+  if(!okPh(i))return toast(t("badph"));
   if(lst("customer").some(u=>u.id===i))return toast(t("dup"));
   st.creds.customers.push({id:i,name:n,pw:await hp(i,p)});
   setSess("customer",i);regOn=false;document.activeElement.blur();await saveCreds();toast(t("done"))}
@@ -134,12 +140,11 @@ ${lst(r).map(u=>`<div class="row" style="padding:8px 0;border-bottom:1px solid v
 <label>${t("pwd")}</label>${pwf("p_"+r,'autocomplete="new-password"')}
 <div class="mu" style="margin-top:6px">${t("upsert")}</div>
 <button class="big" style="background:var(--g)" onclick="setAcct('${r}')">${t("add")}</button></div>`;
-const manage=()=>ROLES.map(acctBox).join("");
 function logout(){setSess(null);render(true)}
 function loginView(r){const ic={admin:"🛡️",user:"🧑‍💼",customer:"🛒"}[r],rg=r==="customer"&&regOn;
   return `<div class="card" style="max-width:380px;margin:20px auto;text-align:center"><div style="font-size:44px">${ic}</div><h2>${t(rg?"rg":{admin:"la",user:"lu",customer:"lc"}[r])}</h2><div style="text-align:start">`+
-  (rg?`<label>${t("nm")}</label><input id="rn" autocomplete="name"><label>${t("ph")}</label><input id="ri" type="tel" dir="ltr" autocomplete="username" placeholder="03xx xxxxxxx"><label>${t("pwd")}</label>${pwf("rp",`autocomplete="new-password" onkeydown="if(event.key==='Enter')regCust()"`)}`
-  :`<label>${t(r==="customer"?"ph":"uid")}</label><input id="li" dir="ltr" autocomplete="username"><label>${t("pwd")}</label>${pwf("lp",`autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin('${r}')"`)}`)+
+  (rg?`<label>${t("nm")}</label><input id="rn" autocomplete="name"><label>${t("ph")}</label>${phIn("ri",'autocomplete="username"')}<label>${t("pwd")}</label>${pwf("rp",`autocomplete="new-password" onkeydown="if(event.key==='Enter')regCust()"`)}`
+  :`<label>${t(r==="customer"?"ph":"uid")}</label>${r==="customer"?phIn("li",'autocomplete="username"'):'<input id="li" dir="ltr" autocomplete="username">'}<label>${t("pwd")}</label>${pwf("lp",`autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin('${r}')"`)}`)+
   `</div><button class="big" style="background:var(--g)" onclick="${rg?"regCust()":`doLogin('${r}')`}">${t(rg?"rg":"si")}</button>`+
   (r==="customer"?`<p class="mu"><a href="#" onclick="event.preventDefault();toggleReg()">${t(rg?"have":"newc")}</a></p>`:"")+`</div>`}
 const outBtn=()=>`<div style="text-align:end"><button class="no" onclick="logout()">${t("out")}</button></div>`;
@@ -159,7 +164,7 @@ lsLoad();window.addEventListener("storage",()=>{if(!st.db){lsLoad();render()}});
 (async()=>{try{const db=await claude.use("db");if(!db)return;st.db=db;
   db.doc("settings/creds").onSnapshot(sn=>{try{const d=sn.data&&sn.data();const f=fixC(d);if(f){st.creds=f;render()}}catch(e){}});
   db.collection("orders").onSnapshot(s=>{st.orders=s.docs.map(d=>d.data?d.data():d).sort((a,b)=>b.created-a.created);render()})}catch(e){}})();
-let cur=["customer","user","admin"].includes(location.hash.slice(1))?location.hash.slice(1):"customer";
+let cur=["admin","user"].includes(location.hash.slice(1))?location.hash.slice(1):"customer";
 function go(v){cur=v;try{history.replaceState(null,"","#"+v)}catch(e){}if(document.activeElement)document.activeElement.blur();render(true)}
 function render(force){
   const v=cur,R=document.documentElement;R.lang=L==="ur"?"ur":"en";R.dir=L==="ur"?"rtl":"ltr";
@@ -180,7 +185,7 @@ function customer(){const c=me("customer"),ac=st.creds.customers.find(u=>u.id===
 <div class="chips"><span class="chip">${t("o1")}</span><span class="chip">${t("o2")}</span></div></div></div>
 <div class="card"><h2>${t("place")}</h2>
 <label>${t("nm")}</label><input id="cn" value="${esc(ac.name||"")}">
-<label>${t("ph")}</label><input id="cp" type="tel" dir="ltr" value="${esc(c)}" placeholder="03xx xxxxxxx">
+<label>${t("ph")}</label>${phIn("cp","",c.replace("+92",""))}
 <label>${t("ad")}</label><textarea id="ca" rows="2"></textarea>
 <label>${t("bt")}</label><input id="cq" type="number" min="1" value="1" dir="ltr" oninput="calc()">
 <div class="tot" id="tot"></div>
@@ -191,8 +196,8 @@ ${last?`<div class="card">${t("got")} <b>${last}</b></div>`:""}
 let last="";
 function calc(){const e=$("#cq");if(!e)return;const q=Math.max(1,+e.value||1),f=free(q);$("#tot").innerHTML=`${q} × ₨${rate(q)} = <b>₨ ${q*rate(q)}</b>${f?`<br>${t("free2").replace("{f}",f).replace("{t}",q+f)}`:""}`}
 async function place(){
-  const n=$("#cn").value.trim(),p=$("#cp").value.trim(),a=$("#ca").value.trim(),q=Math.max(1,+$("#cq").value||1);
-  if(!n||!p||!a)return toast(t("fill"));$("#ca").value="";$("#cq").value=1;
+  const n=$("#cn").value.trim(),p=normPh($("#cp").value),a=$("#ca").value.trim(),q=Math.max(1,+$("#cq").value||1);
+  if(!n||!p||!a)return toast(t("fill"));if(!okPh(p))return toast(t("badph"));$("#ca").value="";$("#cq").value=1;
   const id="AK-"+Date.now().toString(36).toUpperCase().slice(-6);
   await save({id,name:n,phone:p,addr:a,qty:q,free:free(q),rate:rate(q),total:q*rate(q),status:"new",cid:me("customer"),created:Date.now()});
   last=id;toast(t("sent"));render();
@@ -202,9 +207,8 @@ function card(o,btns){return `<div class="card"><div class="row"><b>${esc(o.id)}
 <div style="margin-top:6px">${o.qty} ${t("bot")}${o.free?` + ${o.free} ${t("fr")}`:""} × ₨${o.rate} = <b>₨ ${o.total}</b></div>
 <div class="row" style="margin-top:10px;justify-content:flex-start">${btns}</div></div>`}
 const by=s=>st.orders.filter(o=>o.status===s);
-function user(){const n=by("new"),s=by("submitted"),r=by("rejected"),a=by("approved");
-  return outBtn()+`<h2>${t("up")}</h2>
-<h2 style="font-size:16px">${t("nw")} (${n.length})</h2>
+function userNew(){const n=by("new"),s=by("submitted"),r=by("rejected"),a=by("approved");
+  return `<h2 style="font-size:16px">${t("nw")} (${n.length})</h2>
 ${n.map(o=>card(o,`<button class="ok" onclick="setS('${o.id}','submitted')">${t("sub")}</button>`)).join("")||`<div class="empty">${t("none")}</div>`}
 <h2 style="font-size:16px">${t("wait")} (${s.length})</h2>
 ${s.map(o=>card(o,"")).join("")||'<div class="empty">—</div>'}
@@ -217,13 +221,46 @@ function slip(id){const o=st.orders.find(x=>x.id===id);if(!o)return;
   <p><b>${t("no2")}:</b> ${esc(o.id)}<br><b>${t("dt")}:</b> ${new Date(o.created).toLocaleDateString("en-GB")}<br><b>${t("nm")}:</b> ${esc(o.name)}<br><b>${t("ph")}:</b> <span dir="ltr">${esc(o.phone)}</span><br><b>${t("ad")}:</b> ${esc(o.addr)}</p>
   <p>${t("bt")}: <b>${o.qty}</b>${o.free?` + ${t("fr")}: <b>${o.free}</b>`:""}<br>${t("rate")}: ₨${o.rate}<br><b style="font-size:18px">${t("tot")}: ₨ ${o.total}</b></p><div class="mu" style="text-align:center">${t("thanks")}</div></div>`;
   setTimeout(()=>window.print(),150)}
-function admin(){const s=by("submitted"),d=st.orders.filter(o=>o.status==="approved"||o.status==="rejected");
-  return outBtn()+`<h2>${t("ap")}</h2>
-<div class="card row"><span>${t("all")}: <b>${st.orders.length}</b></span><span>${t("pend")}: <b>${s.length}</b></span><span>${t("appr")}: <b>${by("approved").length}</b></span></div>
-<h2 style="font-size:16px">${t("forap")} (${s.length})</h2>
-${s.map(o=>card(o,`<button class="ok" onclick="setS('${o.id}','approved')">${t("ok")}</button><button class="no" onclick="setS('${o.id}','rejected')">${t("no")}</button>`)).join("")||`<div class="empty">${t("clear")}</div>`}
-<h2 style="font-size:16px">${t("hist")}</h2>${d.map(o=>card(o,"")).join("")||'<div class="empty">—</div>'}
-${manage()}`}
-async function setS(id,s){const o=st.orders.find(x=>x.id===id);if(!o)return;await save({...o,status:s});toast(t(s==="approved"?"t2":s==="submitted"?"t1":"t3"))}
-window.addEventListener("hashchange",()=>{const h=location.hash.slice(1);if(["customer","user","admin"].includes(h)){cur=h;render(true)}});render();
+const pad=n=>String(n).padStart(2,"0");
+const dk=ts=>{const d=new Date(ts);return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())};
+const DS={v:"month",y:new Date().getFullYear(),m:new Date().getMonth(),d:dk(Date.now())};
+const SEC={admin:"dash",user:"dash"};
+const tabs=(r,a)=>`<div class="tabs">${a.map(([k,l])=>`<button class="tb ${SEC[r]===k?"on":""}" onclick="SEC['${r}']='${k}';render(true)">${l}</button>`).join("")}</div>`;
+const sales=()=>st.orders.filter(o=>o.status==="approved"),sdk=o=>dk(o.at||o.created);
+const agg=a=>({n:a.length,b:a.reduce((x,o)=>x+o.qty+(o.free||0),0),r:a.reduce((x,o)=>x+o.total,0)});
+const kps=a=>{const g=agg(a);return `<div class="kps"><div class="kp"><b>${g.n}</b>${t("od")}</div><div class="kp"><b>${g.b}</b>${t("bot")}</div><div class="kp"><b>₨ ${g.r}</b>${t("rev")}</div></div>`};
+function mv(x){DS.m+=x;if(DS.m<0){DS.m=11;DS.y--}if(DS.m>11){DS.m=0;DS.y++}render(true)}
+function dsh(x){const d=new Date(DS.d+"T00:00:00");d.setDate(d.getDate()+x);DS.d=dk(d.getTime());render(true)}
+function setV(v){DS.v=v;render(true)}
+function openDay(k){DS.d=k;DS.v="day";render(true)}
+function dash(){
+  const S=sales(),W=L==="ur"?["اتوار","پیر","منگل","بدھ","جمعرات","جمعہ","ہفتہ"]:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  const sw=`<div class="tabs"><button class="tb ${DS.v==="day"?"on":""}" onclick="setV('day')">${t("day")}</button><button class="tb ${DS.v==="month"?"on":""}" onclick="setV('month')">${t("mon")}</button></div>`;
+  if(DS.v==="day"){const a=S.filter(o=>sdk(o)===DS.d);
+    return sw+`<div class="card row"><button class="tb" onclick="dsh(-1)">◀</button><input type="date" value="${DS.d}" style="width:auto" onchange="if(this.value){DS.d=this.value;render(true)}"><button class="tb" onclick="dsh(1)">▶</button></div>`+kps(a)+`<div style="height:12px"></div>`+(a.map(o=>card(o,"")).join("")||`<div class="empty">—</div>`)}
+  const n=new Date(DS.y,DS.m+1,0).getDate(),pre=new Date(DS.y,DS.m,1).getDay(),M={},ym=DS.y+"-"+pad(DS.m+1);
+  S.forEach(o=>{const k=sdk(o);if(k.slice(0,7)===ym)(M[k]=M[k]||[]).push(o)});
+  let c=W.map(w=>`<div class="cdh">${w}</div>`).join("")+"<div></div>".repeat(pre);
+  for(let i=1;i<=n;i++){const k=ym+"-"+pad(i),g=M[k]?agg(M[k]):null;
+    c+=`<div class="cd${g?" has":""}${k===dk(Date.now())?" td":""}" onclick="openDay('${k}')"><b>${i}</b>${g?`<span>${g.n} ${t("od")}</span><br><span>₨${g.r}</span>`:""}</div>`}
+  return sw+`<div class="card row"><button class="tb" onclick="mv(-1)">◀</button><b>${new Date(DS.y,DS.m,1).toLocaleDateString(L==="ur"?"ur-PK":"en-GB",{month:"long",year:"numeric"})}</b><button class="tb" onclick="mv(1)">▶</button></div>`+kps(Object.values(M).flat())+`<div class="cal" style="margin-top:12px">${c}</div><div class="mu" style="margin-top:8px">${t("pend")}: <b>${by("submitted").length+by("new").length}</b></div>`}
+function sheet(){const O=st.orders.slice().sort((a,b)=>b.created-a.created),h=["#",t("no2"),t("dt"),t("nm"),t("ph"),t("ad"),t("bt"),t("fr"),t("rate"),t("tot"),t("st2")];
+  return `<div class="row" style="margin-bottom:10px"><b>${t("ss")} (${O.length})</b><button class="ok" onclick="xl()">${t("dx")}</button></div><div style="overflow-x:auto"><table class="xt"><tr>${h.map(x=>`<th>${x}</th>`).join("")}</tr>${O.map((o,i)=>`<tr><td>${i+1}</td><td>${esc(o.id)}</td><td>${dk(o.created)}</td><td>${esc(o.name)}</td><td>${esc(o.phone)}</td><td>${esc(o.addr)}</td><td>${o.qty}</td><td>${o.free||0}</td><td>${o.rate}</td><td>${o.total}</td><td>${t(o.status)}</td></tr>`).join("")||`<tr><td colspan="11">—</td></tr>`}</table></div>`}
+async function xl(){const dl=await claude.use("downloads");if(!dl||!window.XLSX)return toast(t("nodl"));
+  const O=st.orders.slice().sort((a,b)=>a.created-b.created).map(o=>({[t("no2")]:o.id,[t("dt")]:dk(o.created),[t("nm")]:o.name,[t("ph")]:o.phone,[t("ad")]:o.addr,[t("bt")]:o.qty,[t("fr")]:o.free||0,[t("rate")]:o.rate,[t("tot")]:o.total,[t("st2")]:t(o.status)}));
+  const n=new Date(DS.y,DS.m+1,0).getDate(),D=[];
+  for(let i=1;i<=n;i++){const k=DS.y+"-"+pad(DS.m+1)+"-"+pad(i),a=agg(sales().filter(o=>sdk(o)===k));D.push({[t("dt")]:k,[t("od")]:a.n,[t("bot")]:a.b,[t("rev")]:a.r})}
+  const wb=XLSX.utils.book_new(),add=(r,n)=>XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(r),n);
+  add(O,"Orders");add(D,"Daily "+DS.y+"-"+pad(DS.m+1));
+  if(me("admin"))add(lst("customer").map(c=>({[t("nm")]:c.name||"",[t("ph")]:c.id})),"Customers");
+  try{await dl.save({filename:"Aab-e-Khizri_"+dk(Date.now())+".xlsx",data:new Blob([XLSX.write(wb,{bookType:"xlsx",type:"array"})])})}catch(e){if(!e||e.code!=="declined")toast(t("nodl"))}}
+async function myPw(){const p=$("#mp").value,a=lst(S.r).find(u=>u.id===S.i);if(!p||!a)return toast(t("need"));
+  a.pw=await hp(a.id,p);$("#mp").value="";document.activeElement.blur();await saveCreds();toast(t("done"))}
+const pwBox=()=>`<div class="card"><h2>${t("pwn")}</h2><label>${t("np")}</label>${pwf("mp",'autocomplete="new-password"')}<button class="big" style="background:#0b5fa5" onclick="myPw()">${t("sv")}</button></div>`;
+const custBox=()=>`<div class="card"><h2>${t("m_customer")} (${lst("customer").length})</h2>${lst("customer").map(u=>`<div class="row" style="padding:8px 0;border-bottom:1px solid var(--bd)"><span dir="ltr">🛒 <b>${esc(u.name||"")}</b> · ${esc(u.id)}</span><button class="no" data-r="customer" data-i="${esc(u.id)}" onclick="delAcct(this.dataset.r,this.dataset.i)">${t("rm")}</button></div>`).join("")||`<div class="empty">${t("nousr")}</div>`}</div>`;
+function user(){return outBtn()+`<h2>${t("up")}</h2>`+tabs("user",[["dash",t("sd")],["new",t("sn")],["sheet",t("ss")],["pw",t("sp")]])+({dash,new:userNew,sheet,pw:pwBox})[SEC.user]()}
+function admin(){return outBtn()+`<h2>${t("ap")}</h2>`+tabs("admin",[["dash",t("sd")],["appr",t("sa2")+" ("+by("submitted").length+")"],["sheet",t("ss")],["acct",t("sc2")]])+({dash,appr:adminAppr,sheet,acct:()=>pwBox()+acctBox("admin")+acctBox("user")+custBox()})[SEC.admin]()}
+function adminAppr(){const s=by("submitted");return `<h2 style="font-size:16px">${t("forap")} (${s.length})</h2>`+(s.map(o=>card(o,`<button class="ok" onclick="setS('${o.id}','approved')">${t("ok")}</button><button class="no" onclick="setS('${o.id}','rejected')">${t("no")}</button>`)).join("")||`<div class="empty">${t("clear")}</div>`)}
+async function setS(id,s){const o=st.orders.find(x=>x.id===id);if(!o)return;await save({...o,status:s,...(s==="approved"?{at:Date.now()}:{})});toast(t(s==="approved"?"t2":s==="submitted"?"t1":"t3"))}
+window.addEventListener("hashchange",()=>{const h=location.hash.slice(1);cur=["admin","user"].includes(h)?h:"customer";render(true)});render();
 </script></body></html>
