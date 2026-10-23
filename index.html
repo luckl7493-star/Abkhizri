@@ -87,8 +87,907 @@ body,.card,input,textarea,label,h2,main{transition:background-color 1.6s ease,co
 <a href="#" id="lg" onclick="event.preventDefault();toggleLang()">اردو / EN</a>
 </nav></header>
 <main id="app"></main>
-<div id="ver" style="text-align:center;opacity:.55;font-size:11px;padding:14px 0 24px" dir="ltr">Aab-e-Khizri · v2.3 · min 6 bottles · ₨1000 advance</div>
+<div id="ver" style="text-align:center;opacity:.55;font-size:11px;padding:14px 0 24px" dir="ltr">Aab-e-Khizri · v2.4 · min 6 bottles · ₨1000 advance</div>
 <div class="toast" id="toast"></div>
+<script>(function(){var M={},C={};function R(n){n=n.replace('./','');if(n==='QRCode')n='index';if(C[n])return C[n].exports;var m=C[n]={exports:{}};M[n](m,m.exports,R);return m.exports}
+M['QRMode']=function(module,exports,require){module.exports = {
+    MODE_NUMBER :       1 << 0,
+    MODE_ALPHA_NUM :    1 << 1,
+    MODE_8BIT_BYTE :    1 << 2,
+    MODE_KANJI :        1 << 3
+};
+
+};
+M['QRErrorCorrectLevel']=function(module,exports,require){module.exports = {
+	L : 1,
+	M : 0,
+	Q : 3,
+	H : 2
+};
+
+};
+M['QRMaskPattern']=function(module,exports,require){module.exports = {
+	PATTERN000 : 0,
+	PATTERN001 : 1,
+	PATTERN010 : 2,
+	PATTERN011 : 3,
+	PATTERN100 : 4,
+	PATTERN101 : 5,
+	PATTERN110 : 6,
+	PATTERN111 : 7
+};
+
+};
+M['QRMath']=function(module,exports,require){var QRMath = {
+	glog : function(n) {
+		if (n < 1) {
+			throw new Error("glog(" + n + ")");
+		}
+		return QRMath.LOG_TABLE[n];
+	},
+	gexp : function(n) {
+		while (n < 0) {
+			n += 255;
+		}
+		while (n >= 256) {
+			n -= 255;
+		}
+		return QRMath.EXP_TABLE[n];
+	},
+	EXP_TABLE : new Array(256),
+	LOG_TABLE : new Array(256)
+};
+for (var i = 0; i < 8; i++) {
+	QRMath.EXP_TABLE[i] = 1 << i;
+}
+for (var i = 8; i < 256; i++) {
+	QRMath.EXP_TABLE[i] = QRMath.EXP_TABLE[i - 4]
+		^ QRMath.EXP_TABLE[i - 5]
+		^ QRMath.EXP_TABLE[i - 6]
+		^ QRMath.EXP_TABLE[i - 8];
+}
+for (var i = 0; i < 255; i++) {
+	QRMath.LOG_TABLE[QRMath.EXP_TABLE[i] ] = i;
+}
+module.exports = QRMath;
+
+};
+M['QRPolynomial']=function(module,exports,require){var QRMath = require('./QRMath');
+function QRPolynomial(num, shift) {
+	if (num.length === undefined) {
+		throw new Error(num.length + "/" + shift);
+	}
+	var offset = 0;
+	while (offset < num.length && num[offset] === 0) {
+		offset++;
+	}
+	this.num = new Array(num.length - offset + shift);
+	for (var i = 0; i < num.length - offset; i++) {
+		this.num[i] = num[i + offset];
+	}
+}
+QRPolynomial.prototype = {
+	get : function(index) {
+		return this.num[index];
+	},
+	getLength : function() {
+		return this.num.length;
+	},
+	multiply : function(e) {
+		var num = new Array(this.getLength() + e.getLength() - 1);
+		for (var i = 0; i < this.getLength(); i++) {
+			for (var j = 0; j < e.getLength(); j++) {
+				num[i + j] ^= QRMath.gexp(QRMath.glog(this.get(i) ) + QRMath.glog(e.get(j) ) );
+			}
+		}
+		return new QRPolynomial(num, 0);
+	},
+	mod : function(e) {
+		if (this.getLength() - e.getLength() < 0) {
+			return this;
+		}
+		var ratio = QRMath.glog(this.get(0) ) - QRMath.glog(e.get(0) );
+		var num = new Array(this.getLength() );
+		for (var i = 0; i < this.getLength(); i++) {
+			num[i] = this.get(i);
+		}
+		for (var x = 0; x < e.getLength(); x++) {
+			num[x] ^= QRMath.gexp(QRMath.glog(e.get(x) ) + ratio);
+		}
+		return new QRPolynomial(num, 0).mod(e);
+	}
+};
+module.exports = QRPolynomial;
+
+};
+M['QRBitBuffer']=function(module,exports,require){function QRBitBuffer() {
+	this.buffer = [];
+	this.length = 0;
+}
+QRBitBuffer.prototype = {
+	get : function(index) {
+		var bufIndex = Math.floor(index / 8);
+		return ( (this.buffer[bufIndex] >>> (7 - index % 8) ) & 1) == 1;
+	},
+	put : function(num, length) {
+		for (var i = 0; i < length; i++) {
+			this.putBit( ( (num >>> (length - i - 1) ) & 1) == 1);
+		}
+	},
+	getLengthInBits : function() {
+		return this.length;
+	},
+	putBit : function(bit) {
+		var bufIndex = Math.floor(this.length / 8);
+		if (this.buffer.length <= bufIndex) {
+			this.buffer.push(0);
+		}
+		if (bit) {
+			this.buffer[bufIndex] |= (0x80 >>> (this.length % 8) );
+		}
+		this.length++;
+	}
+};
+module.exports = QRBitBuffer;
+
+};
+M['QR8bitByte']=function(module,exports,require){var QRMode = require('./QRMode');
+function QR8bitByte(data) {
+	this.mode = QRMode.MODE_8BIT_BYTE;
+	this.data = data;
+}
+QR8bitByte.prototype = {
+	getLength : function() {
+		return this.data.length;
+	},
+	write : function(buffer) {
+		for (var i = 0; i < this.data.length; i++) {
+			buffer.put(this.data.charCodeAt(i), 8);
+		}
+	}
+};
+module.exports = QR8bitByte;
+
+};
+M['QRRSBlock']=function(module,exports,require){var QRErrorCorrectLevel = require('./QRErrorCorrectLevel');
+function QRRSBlock(totalCount, dataCount) {
+	this.totalCount = totalCount;
+	this.dataCount  = dataCount;
+}
+QRRSBlock.RS_BLOCK_TABLE = [
+	[1, 26, 19],
+	[1, 26, 16],
+	[1, 26, 13],
+	[1, 26, 9],
+	[1, 44, 34],
+	[1, 44, 28],
+	[1, 44, 22],
+	[1, 44, 16],
+	[1, 70, 55],
+	[1, 70, 44],
+	[2, 35, 17],
+	[2, 35, 13],
+	[1, 100, 80],
+	[2, 50, 32],
+	[2, 50, 24],
+	[4, 25, 9],
+	[1, 134, 108],
+	[2, 67, 43],
+	[2, 33, 15, 2, 34, 16],
+	[2, 33, 11, 2, 34, 12],
+	[2, 86, 68],
+	[4, 43, 27],
+	[4, 43, 19],
+	[4, 43, 15],
+	[2, 98, 78],
+	[4, 49, 31],
+	[2, 32, 14, 4, 33, 15],
+	[4, 39, 13, 1, 40, 14],
+	[2, 121, 97],
+	[2, 60, 38, 2, 61, 39],
+	[4, 40, 18, 2, 41, 19],
+	[4, 40, 14, 2, 41, 15],
+	[2, 146, 116],
+	[3, 58, 36, 2, 59, 37],
+	[4, 36, 16, 4, 37, 17],
+	[4, 36, 12, 4, 37, 13],
+	[2, 86, 68, 2, 87, 69],
+	[4, 69, 43, 1, 70, 44],
+	[6, 43, 19, 2, 44, 20],
+	[6, 43, 15, 2, 44, 16],
+	[4, 101, 81],
+	[1, 80, 50, 4, 81, 51],
+	[4, 50, 22, 4, 51, 23],
+	[3, 36, 12, 8, 37, 13],
+	[2, 116, 92, 2, 117, 93],
+	[6, 58, 36, 2, 59, 37],
+	[4, 46, 20, 6, 47, 21],
+	[7, 42, 14, 4, 43, 15],
+	[4, 133, 107],
+	[8, 59, 37, 1, 60, 38],
+	[8, 44, 20, 4, 45, 21],
+	[12, 33, 11, 4, 34, 12],
+	[3, 145, 115, 1, 146, 116],
+	[4, 64, 40, 5, 65, 41],
+	[11, 36, 16, 5, 37, 17],
+	[11, 36, 12, 5, 37, 13],
+	[5, 109, 87, 1, 110, 88],
+	[5, 65, 41, 5, 66, 42],
+	[5, 54, 24, 7, 55, 25],
+	[11, 36, 12],
+	[5, 122, 98, 1, 123, 99],
+	[7, 73, 45, 3, 74, 46],
+	[15, 43, 19, 2, 44, 20],
+	[3, 45, 15, 13, 46, 16],
+	[1, 135, 107, 5, 136, 108],
+	[10, 74, 46, 1, 75, 47],
+	[1, 50, 22, 15, 51, 23],
+	[2, 42, 14, 17, 43, 15],
+	[5, 150, 120, 1, 151, 121],
+	[9, 69, 43, 4, 70, 44],
+	[17, 50, 22, 1, 51, 23],
+	[2, 42, 14, 19, 43, 15],
+	[3, 141, 113, 4, 142, 114],
+	[3, 70, 44, 11, 71, 45],
+	[17, 47, 21, 4, 48, 22],
+	[9, 39, 13, 16, 40, 14],
+	[3, 135, 107, 5, 136, 108],
+	[3, 67, 41, 13, 68, 42],
+	[15, 54, 24, 5, 55, 25],
+	[15, 43, 15, 10, 44, 16],
+	[4, 144, 116, 4, 145, 117],
+	[17, 68, 42],
+	[17, 50, 22, 6, 51, 23],
+	[19, 46, 16, 6, 47, 17],
+	[2, 139, 111, 7, 140, 112],
+	[17, 74, 46],
+	[7, 54, 24, 16, 55, 25],
+	[34, 37, 13],
+	[4, 151, 121, 5, 152, 122],
+	[4, 75, 47, 14, 76, 48],
+	[11, 54, 24, 14, 55, 25],
+	[16, 45, 15, 14, 46, 16],
+	[6, 147, 117, 4, 148, 118],
+	[6, 73, 45, 14, 74, 46],
+	[11, 54, 24, 16, 55, 25],
+	[30, 46, 16, 2, 47, 17],
+	[8, 132, 106, 4, 133, 107],
+	[8, 75, 47, 13, 76, 48],
+	[7, 54, 24, 22, 55, 25],
+	[22, 45, 15, 13, 46, 16],
+	[10, 142, 114, 2, 143, 115],
+	[19, 74, 46, 4, 75, 47],
+	[28, 50, 22, 6, 51, 23],
+	[33, 46, 16, 4, 47, 17],
+	[8, 152, 122, 4, 153, 123],
+	[22, 73, 45, 3, 74, 46],
+	[8, 53, 23, 26, 54, 24],
+	[12, 45, 15, 28, 46, 16],
+	[3, 147, 117, 10, 148, 118],
+	[3, 73, 45, 23, 74, 46],
+	[4, 54, 24, 31, 55, 25],
+	[11, 45, 15, 31, 46, 16],
+	[7, 146, 116, 7, 147, 117],
+	[21, 73, 45, 7, 74, 46],
+	[1, 53, 23, 37, 54, 24],
+	[19, 45, 15, 26, 46, 16],
+	[5, 145, 115, 10, 146, 116],
+	[19, 75, 47, 10, 76, 48],
+	[15, 54, 24, 25, 55, 25],
+	[23, 45, 15, 25, 46, 16],
+	[13, 145, 115, 3, 146, 116],
+	[2, 74, 46, 29, 75, 47],
+	[42, 54, 24, 1, 55, 25],
+	[23, 45, 15, 28, 46, 16],
+	[17, 145, 115],
+	[10, 74, 46, 23, 75, 47],
+	[10, 54, 24, 35, 55, 25],
+	[19, 45, 15, 35, 46, 16],
+	[17, 145, 115, 1, 146, 116],
+	[14, 74, 46, 21, 75, 47],
+	[29, 54, 24, 19, 55, 25],
+	[11, 45, 15, 46, 46, 16],
+	[13, 145, 115, 6, 146, 116],
+	[14, 74, 46, 23, 75, 47],
+	[44, 54, 24, 7, 55, 25],
+	[59, 46, 16, 1, 47, 17],
+	[12, 151, 121, 7, 152, 122],
+	[12, 75, 47, 26, 76, 48],
+	[39, 54, 24, 14, 55, 25],
+	[22, 45, 15, 41, 46, 16],
+	[6, 151, 121, 14, 152, 122],
+	[6, 75, 47, 34, 76, 48],
+	[46, 54, 24, 10, 55, 25],
+	[2, 45, 15, 64, 46, 16],
+	[17, 152, 122, 4, 153, 123],
+	[29, 74, 46, 14, 75, 47],
+	[49, 54, 24, 10, 55, 25],
+	[24, 45, 15, 46, 46, 16],
+	[4, 152, 122, 18, 153, 123],
+	[13, 74, 46, 32, 75, 47],
+	[48, 54, 24, 14, 55, 25],
+	[42, 45, 15, 32, 46, 16],
+	[20, 147, 117, 4, 148, 118],
+	[40, 75, 47, 7, 76, 48],
+	[43, 54, 24, 22, 55, 25],
+	[10, 45, 15, 67, 46, 16],
+	[19, 148, 118, 6, 149, 119],
+	[18, 75, 47, 31, 76, 48],
+	[34, 54, 24, 34, 55, 25],
+	[20, 45, 15, 61, 46, 16]
+];
+QRRSBlock.getRSBlocks = function(typeNumber, errorCorrectLevel) {
+	var rsBlock = QRRSBlock.getRsBlockTable(typeNumber, errorCorrectLevel);
+	if (rsBlock === undefined) {
+		throw new Error("bad rs block @ typeNumber:" + typeNumber + "/errorCorrectLevel:" + errorCorrectLevel);
+	}
+	var length = rsBlock.length / 3;
+	var list = [];
+	for (var i = 0; i < length; i++) {
+		var count = rsBlock[i * 3 + 0];
+		var totalCount = rsBlock[i * 3 + 1];
+		var dataCount  = rsBlock[i * 3 + 2];
+		for (var j = 0; j < count; j++) {
+			list.push(new QRRSBlock(totalCount, dataCount) );	
+		}
+	}
+	return list;
+};
+QRRSBlock.getRsBlockTable = function(typeNumber, errorCorrectLevel) {
+	switch(errorCorrectLevel) {
+	case QRErrorCorrectLevel.L :
+		return QRRSBlock.RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 0];
+	case QRErrorCorrectLevel.M :
+		return QRRSBlock.RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 1];
+	case QRErrorCorrectLevel.Q :
+		return QRRSBlock.RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 2];
+	case QRErrorCorrectLevel.H :
+		return QRRSBlock.RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 3];
+	default :
+		return undefined;
+	}
+};
+module.exports = QRRSBlock;
+
+};
+M['QRUtil']=function(module,exports,require){var QRMode = require('./QRMode');
+var QRPolynomial = require('./QRPolynomial');
+var QRMath = require('./QRMath');
+var QRMaskPattern = require('./QRMaskPattern');
+var QRUtil = {
+    PATTERN_POSITION_TABLE : [
+        [],
+        [6, 18],
+        [6, 22],
+        [6, 26],
+        [6, 30],
+        [6, 34],
+        [6, 22, 38],
+        [6, 24, 42],
+        [6, 26, 46],
+        [6, 28, 50],
+        [6, 30, 54],        
+        [6, 32, 58],
+        [6, 34, 62],
+        [6, 26, 46, 66],
+        [6, 26, 48, 70],
+        [6, 26, 50, 74],
+        [6, 30, 54, 78],
+        [6, 30, 56, 82],
+        [6, 30, 58, 86],
+        [6, 34, 62, 90],
+        [6, 28, 50, 72, 94],
+        [6, 26, 50, 74, 98],
+        [6, 30, 54, 78, 102],
+        [6, 28, 54, 80, 106],
+        [6, 32, 58, 84, 110],
+        [6, 30, 58, 86, 114],
+        [6, 34, 62, 90, 118],
+        [6, 26, 50, 74, 98, 122],
+        [6, 30, 54, 78, 102, 126],
+        [6, 26, 52, 78, 104, 130],
+        [6, 30, 56, 82, 108, 134],
+        [6, 34, 60, 86, 112, 138],
+        [6, 30, 58, 86, 114, 142],
+        [6, 34, 62, 90, 118, 146],
+        [6, 30, 54, 78, 102, 126, 150],
+        [6, 24, 50, 76, 102, 128, 154],
+        [6, 28, 54, 80, 106, 132, 158],
+        [6, 32, 58, 84, 110, 136, 162],
+        [6, 26, 54, 82, 110, 138, 166],
+        [6, 30, 58, 86, 114, 142, 170]
+    ],
+    G15 : (1 << 10) | (1 << 8) | (1 << 5) | (1 << 4) | (1 << 2) | (1 << 1) | (1 << 0),
+    G18 : (1 << 12) | (1 << 11) | (1 << 10) | (1 << 9) | (1 << 8) | (1 << 5) | (1 << 2) | (1 << 0),
+    G15_MASK : (1 << 14) | (1 << 12) | (1 << 10)    | (1 << 4) | (1 << 1),
+    getBCHTypeInfo : function(data) {
+        var d = data << 10;
+        while (QRUtil.getBCHDigit(d) - QRUtil.getBCHDigit(QRUtil.G15) >= 0) {
+            d ^= (QRUtil.G15 << (QRUtil.getBCHDigit(d) - QRUtil.getBCHDigit(QRUtil.G15) ) );    
+        }
+        return ( (data << 10) | d) ^ QRUtil.G15_MASK;
+    },
+    getBCHTypeNumber : function(data) {
+        var d = data << 12;
+        while (QRUtil.getBCHDigit(d) - QRUtil.getBCHDigit(QRUtil.G18) >= 0) {
+            d ^= (QRUtil.G18 << (QRUtil.getBCHDigit(d) - QRUtil.getBCHDigit(QRUtil.G18) ) );    
+        }
+        return (data << 12) | d;
+    },
+    getBCHDigit : function(data) {
+        var digit = 0;
+        while (data !== 0) {
+            digit++;
+            data >>>= 1;
+        }
+        return digit;
+    },
+    getPatternPosition : function(typeNumber) {
+        return QRUtil.PATTERN_POSITION_TABLE[typeNumber - 1];
+    },
+    getMask : function(maskPattern, i, j) {
+        switch (maskPattern) {
+        case QRMaskPattern.PATTERN000 : return (i + j) % 2 === 0;
+        case QRMaskPattern.PATTERN001 : return i % 2 === 0;
+        case QRMaskPattern.PATTERN010 : return j % 3 === 0;
+        case QRMaskPattern.PATTERN011 : return (i + j) % 3 === 0;
+        case QRMaskPattern.PATTERN100 : return (Math.floor(i / 2) + Math.floor(j / 3) ) % 2 === 0;
+        case QRMaskPattern.PATTERN101 : return (i * j) % 2 + (i * j) % 3 === 0;
+        case QRMaskPattern.PATTERN110 : return ( (i * j) % 2 + (i * j) % 3) % 2 === 0;
+        case QRMaskPattern.PATTERN111 : return ( (i * j) % 3 + (i + j) % 2) % 2 === 0;
+        default :
+            throw new Error("bad maskPattern:" + maskPattern);
+        }
+    },
+    getErrorCorrectPolynomial : function(errorCorrectLength) {
+        var a = new QRPolynomial([1], 0);
+        for (var i = 0; i < errorCorrectLength; i++) {
+            a = a.multiply(new QRPolynomial([1, QRMath.gexp(i)], 0) );
+        }
+        return a;
+    },
+    getLengthInBits : function(mode, type) {
+        if (1 <= type && type < 10) {
+            switch(mode) {
+            case QRMode.MODE_NUMBER     : return 10;
+            case QRMode.MODE_ALPHA_NUM  : return 9;
+            case QRMode.MODE_8BIT_BYTE  : return 8;
+            case QRMode.MODE_KANJI      : return 8;
+            default :
+                throw new Error("mode:" + mode);
+            }
+        } else if (type < 27) {
+            switch(mode) {
+            case QRMode.MODE_NUMBER     : return 12;
+            case QRMode.MODE_ALPHA_NUM  : return 11;
+            case QRMode.MODE_8BIT_BYTE  : return 16;
+            case QRMode.MODE_KANJI      : return 10;
+            default :
+                throw new Error("mode:" + mode);
+            }
+        } else if (type < 41) {
+            switch(mode) {
+            case QRMode.MODE_NUMBER     : return 14;
+            case QRMode.MODE_ALPHA_NUM  : return 13;
+            case QRMode.MODE_8BIT_BYTE  : return 16;
+            case QRMode.MODE_KANJI      : return 12;
+            default :
+                throw new Error("mode:" + mode);
+            }
+        } else {
+            throw new Error("type:" + type);
+        }
+    },
+    getLostPoint : function(qrCode) {
+        var moduleCount = qrCode.getModuleCount();
+        var lostPoint = 0;
+        var row = 0; 
+        var col = 0;
+        for (row = 0; row < moduleCount; row++) {
+            for (col = 0; col < moduleCount; col++) {
+                var sameCount = 0;
+                var dark = qrCode.isDark(row, col);
+                for (var r = -1; r <= 1; r++) {
+                    if (row + r < 0 || moduleCount <= row + r) {
+                        continue;
+                    }
+                    for (var c = -1; c <= 1; c++) {
+                        if (col + c < 0 || moduleCount <= col + c) {
+                            continue;
+                        }
+                        if (r === 0 && c === 0) {
+                            continue;
+                        }
+                        if (dark === qrCode.isDark(row + r, col + c) ) {
+                            sameCount++;
+                        }
+                    }
+                }
+                if (sameCount > 5) {
+                    lostPoint += (3 + sameCount - 5);
+                }
+            }
+        }
+        for (row = 0; row < moduleCount - 1; row++) {
+            for (col = 0; col < moduleCount - 1; col++) {
+                var count = 0;
+                if (qrCode.isDark(row,     col    ) ) count++;
+                if (qrCode.isDark(row + 1, col    ) ) count++;
+                if (qrCode.isDark(row,     col + 1) ) count++;
+                if (qrCode.isDark(row + 1, col + 1) ) count++;
+                if (count === 0 || count === 4) {
+                    lostPoint += 3;
+                }
+            }
+        }
+        for (row = 0; row < moduleCount; row++) {
+            for (col = 0; col < moduleCount - 6; col++) {
+                if (qrCode.isDark(row, col) && 
+                        !qrCode.isDark(row, col + 1) && 
+                         qrCode.isDark(row, col + 2) && 
+                         qrCode.isDark(row, col + 3) && 
+                         qrCode.isDark(row, col + 4) && 
+                        !qrCode.isDark(row, col + 5) && 
+                         qrCode.isDark(row, col + 6) ) {
+                    lostPoint += 40;
+                }
+            }
+        }
+        for (col = 0; col < moduleCount; col++) {
+            for (row = 0; row < moduleCount - 6; row++) {
+                if (qrCode.isDark(row, col) &&
+                        !qrCode.isDark(row + 1, col) &&
+                         qrCode.isDark(row + 2, col) &&
+                         qrCode.isDark(row + 3, col) &&
+                         qrCode.isDark(row + 4, col) &&
+                        !qrCode.isDark(row + 5, col) &&
+                         qrCode.isDark(row + 6, col) ) {
+                    lostPoint += 40;
+                }
+            }
+        }
+        var darkCount = 0;
+        for (col = 0; col < moduleCount; col++) {
+            for (row = 0; row < moduleCount; row++) {
+                if (qrCode.isDark(row, col) ) {
+                    darkCount++;
+                }
+            }
+        }
+        var ratio = Math.abs(100 * darkCount / moduleCount / moduleCount - 50) / 5;
+        lostPoint += ratio * 10;
+        return lostPoint;       
+    }
+};
+module.exports = QRUtil;
+
+};
+M['index']=function(module,exports,require){
+var QR8bitByte = require('./QR8bitByte');
+var QRUtil = require('./QRUtil');
+var QRPolynomial = require('./QRPolynomial');
+var QRRSBlock = require('./QRRSBlock');
+var QRBitBuffer = require('./QRBitBuffer');
+function QRCode(typeNumber, errorCorrectLevel) {
+	this.typeNumber = typeNumber;
+	this.errorCorrectLevel = errorCorrectLevel;
+	this.modules = null;
+	this.moduleCount = 0;
+	this.dataCache = null;
+	this.dataList = [];
+}
+QRCode.prototype = {
+	addData : function(data) {
+		var newData = new QR8bitByte(data);
+		this.dataList.push(newData);
+		this.dataCache = null;
+	},
+	isDark : function(row, col) {
+		if (row < 0 || this.moduleCount <= row || col < 0 || this.moduleCount <= col) {
+			throw new Error(row + "," + col);
+		}
+		return this.modules[row][col];
+	},
+	getModuleCount : function() {
+		return this.moduleCount;
+	},
+	make : function() {
+		if (this.typeNumber < 1 ){
+			var typeNumber = 1;
+			for (typeNumber = 1; typeNumber < 40; typeNumber++) {
+				var rsBlocks = QRRSBlock.getRSBlocks(typeNumber, this.errorCorrectLevel);
+				var buffer = new QRBitBuffer();
+				var totalDataCount = 0;
+				for (var i = 0; i < rsBlocks.length; i++) {
+					totalDataCount += rsBlocks[i].dataCount;
+				}
+				for (var x = 0; x < this.dataList.length; x++) {
+					var data = this.dataList[x];
+					buffer.put(data.mode, 4);
+					buffer.put(data.getLength(), QRUtil.getLengthInBits(data.mode, typeNumber) );
+					data.write(buffer);
+				}
+				if (buffer.getLengthInBits() <= totalDataCount * 8)
+					break;
+			}
+			this.typeNumber = typeNumber;
+		}
+		this.makeImpl(false, this.getBestMaskPattern() );
+	},
+	makeImpl : function(test, maskPattern) {
+		this.moduleCount = this.typeNumber * 4 + 17;
+		this.modules = new Array(this.moduleCount);
+		for (var row = 0; row < this.moduleCount; row++) {
+			this.modules[row] = new Array(this.moduleCount);
+			for (var col = 0; col < this.moduleCount; col++) {
+				this.modules[row][col] = null;//(col + row) % 3;
+			}
+		}
+		this.setupPositionProbePattern(0, 0);
+		this.setupPositionProbePattern(this.moduleCount - 7, 0);
+		this.setupPositionProbePattern(0, this.moduleCount - 7);
+		this.setupPositionAdjustPattern();
+		this.setupTimingPattern();
+		this.setupTypeInfo(test, maskPattern);
+		if (this.typeNumber >= 7) {
+			this.setupTypeNumber(test);
+		}
+		if (this.dataCache === null) {
+			this.dataCache = QRCode.createData(this.typeNumber, this.errorCorrectLevel, this.dataList);
+		}
+		this.mapData(this.dataCache, maskPattern);
+	},
+	setupPositionProbePattern : function(row, col)  {
+		for (var r = -1; r <= 7; r++) {
+			if (row + r <= -1 || this.moduleCount <= row + r) continue;
+			for (var c = -1; c <= 7; c++) {
+				if (col + c <= -1 || this.moduleCount <= col + c) continue;
+				if ( (0 <= r && r <= 6 && (c === 0 || c === 6) ) || 
+                     (0 <= c && c <= 6 && (r === 0 || r === 6) ) || 
+                     (2 <= r && r <= 4 && 2 <= c && c <= 4) ) {
+					this.modules[row + r][col + c] = true;
+				} else {
+					this.modules[row + r][col + c] = false;
+				}
+			}		
+		}		
+	},
+	getBestMaskPattern : function() {
+		var minLostPoint = 0;
+		var pattern = 0;
+		for (var i = 0; i < 8; i++) {
+			this.makeImpl(true, i);
+			var lostPoint = QRUtil.getLostPoint(this);
+			if (i === 0 || minLostPoint >  lostPoint) {
+				minLostPoint = lostPoint;
+				pattern = i;
+			}
+		}
+		return pattern;
+	},
+	createMovieClip : function(target_mc, instance_name, depth) {
+		var qr_mc = target_mc.createEmptyMovieClip(instance_name, depth);
+		var cs = 1;
+		this.make();
+		for (var row = 0; row < this.modules.length; row++) {
+			var y = row * cs;
+			for (var col = 0; col < this.modules[row].length; col++) {
+				var x = col * cs;
+				var dark = this.modules[row][col];
+				if (dark) {
+					qr_mc.beginFill(0, 100);
+					qr_mc.moveTo(x, y);
+					qr_mc.lineTo(x + cs, y);
+					qr_mc.lineTo(x + cs, y + cs);
+					qr_mc.lineTo(x, y + cs);
+					qr_mc.endFill();
+				}
+			}
+		}
+		return qr_mc;
+	},
+	setupTimingPattern : function() {
+		for (var r = 8; r < this.moduleCount - 8; r++) {
+			if (this.modules[r][6] !== null) {
+				continue;
+			}
+			this.modules[r][6] = (r % 2 === 0);
+		}
+		for (var c = 8; c < this.moduleCount - 8; c++) {
+			if (this.modules[6][c] !== null) {
+				continue;
+			}
+			this.modules[6][c] = (c % 2 === 0);
+		}
+	},
+	setupPositionAdjustPattern : function() {
+		var pos = QRUtil.getPatternPosition(this.typeNumber);
+		for (var i = 0; i < pos.length; i++) {
+			for (var j = 0; j < pos.length; j++) {
+				var row = pos[i];
+				var col = pos[j];
+				if (this.modules[row][col] !== null) {
+					continue;
+				}
+				for (var r = -2; r <= 2; r++) {
+					for (var c = -2; c <= 2; c++) {
+						if (Math.abs(r) === 2 || 
+                            Math.abs(c) === 2 ||
+                            (r === 0 && c === 0) ) {
+							this.modules[row + r][col + c] = true;
+						} else {
+							this.modules[row + r][col + c] = false;
+						}
+					}
+				}
+			}
+		}
+	},
+	setupTypeNumber : function(test) {
+		var bits = QRUtil.getBCHTypeNumber(this.typeNumber);
+        var mod;
+		for (var i = 0; i < 18; i++) {
+			mod = (!test && ( (bits >> i) & 1) === 1);
+			this.modules[Math.floor(i / 3)][i % 3 + this.moduleCount - 8 - 3] = mod;
+		}
+		for (var x = 0; x < 18; x++) {
+			mod = (!test && ( (bits >> x) & 1) === 1);
+			this.modules[x % 3 + this.moduleCount - 8 - 3][Math.floor(x / 3)] = mod;
+		}
+	},
+	setupTypeInfo : function(test, maskPattern) {
+		var data = (this.errorCorrectLevel << 3) | maskPattern;
+		var bits = QRUtil.getBCHTypeInfo(data);
+        var mod;
+		for (var v = 0; v < 15; v++) {
+			mod = (!test && ( (bits >> v) & 1) === 1);
+			if (v < 6) {
+				this.modules[v][8] = mod;
+			} else if (v < 8) {
+				this.modules[v + 1][8] = mod;
+			} else {
+				this.modules[this.moduleCount - 15 + v][8] = mod;
+			}
+		}
+		for (var h = 0; h < 15; h++) {
+			mod = (!test && ( (bits >> h) & 1) === 1);
+			if (h < 8) {
+				this.modules[8][this.moduleCount - h - 1] = mod;
+			} else if (h < 9) {
+				this.modules[8][15 - h - 1 + 1] = mod;
+			} else {
+				this.modules[8][15 - h - 1] = mod;
+			}
+		}
+		this.modules[this.moduleCount - 8][8] = (!test);
+	},
+	mapData : function(data, maskPattern) {
+		var inc = -1;
+		var row = this.moduleCount - 1;
+		var bitIndex = 7;
+		var byteIndex = 0;
+		for (var col = this.moduleCount - 1; col > 0; col -= 2) {
+			if (col === 6) col--;
+			while (true) {
+				for (var c = 0; c < 2; c++) {
+					if (this.modules[row][col - c] === null) {
+						var dark = false;
+						if (byteIndex < data.length) {
+							dark = ( ( (data[byteIndex] >>> bitIndex) & 1) === 1);
+						}
+						var mask = QRUtil.getMask(maskPattern, row, col - c);
+						if (mask) {
+							dark = !dark;
+						}
+						this.modules[row][col - c] = dark;
+						bitIndex--;
+						if (bitIndex === -1) {
+							byteIndex++;
+							bitIndex = 7;
+						}
+					}
+				}
+				row += inc;
+				if (row < 0 || this.moduleCount <= row) {
+					row -= inc;
+					inc = -inc;
+					break;
+				}
+			}
+		}
+	}
+};
+QRCode.PAD0 = 0xEC;
+QRCode.PAD1 = 0x11;
+QRCode.createData = function(typeNumber, errorCorrectLevel, dataList) {
+	var rsBlocks = QRRSBlock.getRSBlocks(typeNumber, errorCorrectLevel);
+	var buffer = new QRBitBuffer();
+	for (var i = 0; i < dataList.length; i++) {
+		var data = dataList[i];
+		buffer.put(data.mode, 4);
+		buffer.put(data.getLength(), QRUtil.getLengthInBits(data.mode, typeNumber) );
+		data.write(buffer);
+	}
+	var totalDataCount = 0;
+	for (var x = 0; x < rsBlocks.length; x++) {
+		totalDataCount += rsBlocks[x].dataCount;
+	}
+	if (buffer.getLengthInBits() > totalDataCount * 8) {
+		throw new Error("code length overflow. (" + 
+            buffer.getLengthInBits() + 
+            ">" +  
+            totalDataCount * 8 + 
+            ")");
+	}
+	if (buffer.getLengthInBits() + 4 <= totalDataCount * 8) {
+		buffer.put(0, 4);
+	}
+	while (buffer.getLengthInBits() % 8 !== 0) {
+		buffer.putBit(false);
+	}
+	while (true) {
+		if (buffer.getLengthInBits() >= totalDataCount * 8) {
+			break;
+		}
+		buffer.put(QRCode.PAD0, 8);
+		if (buffer.getLengthInBits() >= totalDataCount * 8) {
+			break;
+		}
+		buffer.put(QRCode.PAD1, 8);
+	}
+	return QRCode.createBytes(buffer, rsBlocks);
+};
+QRCode.createBytes = function(buffer, rsBlocks) {
+	var offset = 0;
+	var maxDcCount = 0;
+	var maxEcCount = 0;
+	var dcdata = new Array(rsBlocks.length);
+	var ecdata = new Array(rsBlocks.length);
+	for (var r = 0; r < rsBlocks.length; r++) {
+		var dcCount = rsBlocks[r].dataCount;
+		var ecCount = rsBlocks[r].totalCount - dcCount;
+		maxDcCount = Math.max(maxDcCount, dcCount);
+		maxEcCount = Math.max(maxEcCount, ecCount);
+		dcdata[r] = new Array(dcCount);
+		for (var i = 0; i < dcdata[r].length; i++) {
+			dcdata[r][i] = 0xff & buffer.buffer[i + offset];
+		}
+		offset += dcCount;
+		var rsPoly = QRUtil.getErrorCorrectPolynomial(ecCount);
+		var rawPoly = new QRPolynomial(dcdata[r], rsPoly.getLength() - 1);
+		var modPoly = rawPoly.mod(rsPoly);
+		ecdata[r] = new Array(rsPoly.getLength() - 1);
+		for (var x = 0; x < ecdata[r].length; x++) {
+            var modIndex = x + modPoly.getLength() - ecdata[r].length;
+			ecdata[r][x] = (modIndex >= 0)? modPoly.get(modIndex) : 0;
+		}
+	}
+	var totalCodeCount = 0;
+	for (var y = 0; y < rsBlocks.length; y++) {
+		totalCodeCount += rsBlocks[y].totalCount;
+	}
+	var data = new Array(totalCodeCount);
+	var index = 0;
+	for (var z = 0; z < maxDcCount; z++) {
+		for (var s = 0; s < rsBlocks.length; s++) {
+			if (z < dcdata[s].length) {
+				data[index++] = dcdata[s][z];
+			}
+		}
+	}
+	for (var xx = 0; xx < maxEcCount; xx++) {
+		for (var t = 0; t < rsBlocks.length; t++) {
+			if (xx < ecdata[t].length) {
+				data[index++] = ecdata[t][xx];
+			}
+		}
+	}
+	return data;
+};
+module.exports = QRCode;
+
+};
+window.QRC=R('index');window.QRL=R('QRErrorCorrectLevel');})();</script>
 <script>
 const T={
 en:{ttl:"🌿 Aab-e-Khizri",c:"🛒 Customer",u:"🧑‍💼 User",a:"🛡️ Admin",tag:"Better digestion after meals · Relief from gas, indigestion & acidity · 100% natural",per:"/ bottle",o1:"Buy 12, get 2 free",o2:"120+ bottles: ₨200 each",place:"Place your order",nm:"Your name",ph:"Phone number",ad:"Address",bt:"Bottles",send:"✅ Send order",
@@ -98,7 +997,7 @@ bot:"bottles",fr:"free",tot:"Total",free2:"🎁 You get {f} free bottles (total 
 up:"🧑‍💼 User Panel",nw:"📥 New customer orders",sub:"Submit to Admin",wait:"⏳ Awaiting approval",gen:"✔ Generated orders",pr:"🖨️ Print",none:"No new orders 🌱",gnone:"Appears here once Admin approves",rej:"✖ Rejected",
 ap:"🛡️ Admin Panel",all:"Total orders",pend:"Pending",appr:"Approved",forap:"⏳ For approval",ok:"✔ Approve",no:"✖ Reject",hist:"📜 History",clear:"Nothing pending 🎉",
 t1:"Submitted to Admin",t2:"Approved — order generated for User ✔",t3:"Rejected",
-min6:"Minimum order is 6 bottles",taxl:"Tax",o3:"Minimum 6 bottles · tax on bottles above 6",dlv:"All over Pakistan · Home Delivery",taxh:"💰 Tax (%) on bottles above 6",rmo:"Remove from my list",rmq:"Remove this order from your list? The shop keeps its record.",cdl:"Customer removed this from their list (record kept)",m6:"Minimum 6",m6h:"Minimum order is 6 bottles. You cannot order 1–5 bottles. Tax applies only to bottles above 6.",chg:"✏️ Change address",na:"Enter the corrected address",oa:"Old address",nad:"New address",adok:"Address updated ✔",lock:"Too many wrong attempts — locked for 15 minutes",exp:"Session expired — please sign in again",pwl:"Password must be at least 6 characters (and not the same as the ID)",lim:"Too many requests — please try again later",slg:"🔒 Security log",wa:"💬 WhatsApp",fg:"Forgot password?",bk:"← Back to sign in",rcl:"Recovery code",fgad:"Enter your ID, your recovery code and a new password.",fgcu:"Enter your number and a new password. The shop will approve it, then sign in with the new password.",fgus:"Enter your ID and a new password. Admin will approve it, then sign in with the new password.",fgs:"Send reset request",fgok:"Request sent — wait for approval",nf:"This ID / number is not registered",rq:"🔑 Password reset requests",rch:"🛟 Admin recovery code",rcon:"Recovery code is set ✔",rcoff:"⚠️ Not set — set one now, otherwise a forgotten admin password cannot be recovered",rcs:"Code must be at least 4 characters",rs:"Reset",sl:"Order Slip",no2:"Order No.",dt:"Date",rate:"Rate",thanks:"Thank you 💚 Natural digestion, healthy life",sc:"Customer Order",su:"User",sa:"Admin",mu2:"👥 Manage Users",nuid:"New user ID",add:"➕ Add user",rm:"Remove",np:"New password",rs:"Reset admin password",sv:"Save",done:"Saved ✔",dup:"Duplicate number — this number/ID is already registered",need:"Enter ID and password",nousr:"No users yet",lg:"Login",uid:"ID",pwd:"Password",si:"Sign in",bad:"Wrong ID or password",out:"Logout 🚪",la:"Admin Login",lu:"User Login",rp:"Order Report",day:"Day",mon:"Month",sd:"📊 Dashboard",ss:"📑 Sheet",sa2:"⏳ Approvals",sc2:"👥 Accounts",sp:"🔑 Password",sn:"📥 Orders",dx:"⬇️ Download Excel",nodl:"Download not available here",badph:"Enter a valid phone number (10 digits after +92)",od:"Orders",pwn:"🔑 Change my password",rev:"Revenue",st2:"Status",lc:"Customer Login",rg:"Create customer account",newc:"New customer? Create account",have:"Already have an account? Sign in",myo:"📦 My orders",m_admin:"🛡️ Admins",m_user:"🧑‍💼 Users",m_customer:"🛒 Customers",upsert:"Duplicate IDs are not allowed. To change a password, use the Reset button.",last:"Cannot remove the last admin",selfx:"You cannot remove yourself",adv:"Advance (must pay first)",advn:"Advance paid",rem:"Remaining (pay on delivery)",payto:"Send the advance to this account",acn:"Account No.",acname:"Account title",bank:"Bank / wallet",txn:"Transaction ID of your advance payment",txnh:"Pay the advance first, then enter the Transaction ID here. The order cannot be sent without it.",txnneed:"Enter the Transaction ID of your advance payment",nopay:"Payment account is not set yet — please contact the shop",advfail:"Order sent, but the advance could not be saved — contact the shop",payh:"💳 Advance payment account",advamt:"Advance amount (₨)",cpy:"📋 Copy",cpd:"Copied ✔",noadv:"⚠️ No advance recorded",tn:"Txn ID",adv1:"Advance",ahint:"Customers see this account number when ordering. Set the advance to 0 to turn the advance off.",needacct:"Enter the account number"},
+min6:"Minimum order is 6 bottles",taxl:"Tax",o3:"Minimum 6 bottles · tax on bottles above 6",dlv:"All over Pakistan · Home Delivery",taxh:"💰 Tax (%) on bottles above 6",rmo:"Remove from my list",rmq:"Remove this order from your list? The shop keeps its record.",cdl:"Customer removed this from their list (record kept)",m6:"Minimum 6",m6h:"Minimum order is 6 bottles. You cannot order 1–5 bottles. Tax applies only to bottles above 6.",chg:"✏️ Change address",na:"Enter the corrected address",oa:"Old address",nad:"New address",adok:"Address updated ✔",lock:"Too many wrong attempts — locked for 15 minutes",exp:"Session expired — please sign in again",pwl:"Password must be at least 6 characters (and not the same as the ID)",lim:"Too many requests — please try again later",slg:"🔒 Security log",wa:"💬 WhatsApp",fg:"Forgot password?",bk:"← Back to sign in",rcl:"Recovery code",fgad:"Enter your ID, your recovery code and a new password.",fgcu:"Enter your number and a new password. The shop will approve it, then sign in with the new password.",fgus:"Enter your ID and a new password. Admin will approve it, then sign in with the new password.",fgs:"Send reset request",fgok:"Request sent — wait for approval",nf:"This ID / number is not registered",rq:"🔑 Password reset requests",rch:"🛟 Admin recovery code",rcon:"Recovery code is set ✔",rcoff:"⚠️ Not set — set one now, otherwise a forgotten admin password cannot be recovered",rcs:"Code must be at least 4 characters",rs:"Reset",sl:"Order Slip",no2:"Order No.",dt:"Date",rate:"Rate",thanks:"Thank you 💚 Natural digestion, healthy life",sc:"Customer Order",su:"User",sa:"Admin",mu2:"👥 Manage Users",nuid:"New user ID",add:"➕ Add user",rm:"Remove",np:"New password",rs:"Reset admin password",sv:"Save",done:"Saved ✔",dup:"Duplicate number — this number/ID is already registered",need:"Enter ID and password",nousr:"No users yet",lg:"Login",uid:"ID",pwd:"Password",si:"Sign in",bad:"Wrong ID or password",out:"Logout 🚪",la:"Admin Login",lu:"User Login",rp:"Order Report",day:"Day",mon:"Month",sd:"📊 Dashboard",ss:"📑 Sheet",sa2:"⏳ Approvals",sc2:"👥 Accounts",sp:"🔑 Password",sn:"📥 Orders",dx:"⬇️ Download Excel",nodl:"Download not available here",badph:"Enter a valid phone number (10 digits after +92)",od:"Orders",pwn:"🔑 Change my password",rev:"Revenue",st2:"Status",lc:"Customer Login",rg:"Create customer account",newc:"New customer? Create account",have:"Already have an account? Sign in",myo:"📦 My orders",m_admin:"🛡️ Admins",m_user:"🧑‍💼 Users",m_customer:"🛒 Customers",upsert:"Duplicate IDs are not allowed. To change a password, use the Reset button.",last:"Cannot remove the last admin",selfx:"You cannot remove yourself",adv:"Advance (must pay first)",advn:"Advance paid",rem:"Remaining (pay on delivery)",payto:"Send the advance to this account",acn:"Account No.",acname:"Account title",bank:"Bank / wallet",txn:"Transaction ID of your advance payment",txnh:"Pay the advance first, then enter the Transaction ID here. The order cannot be sent without it.",txnneed:"Enter the Transaction ID of your advance payment",nopay:"Payment account is not set yet — please contact the shop",advfail:"Order sent, but the advance could not be saved — contact the shop",payh:"💳 Advance payment account",advamt:"Advance amount (₨)",cpy:"📋 Copy",cpd:"Copied ✔",noadv:"⚠️ No advance recorded",tn:"Txn ID",adv1:"Advance",ahint:"Customers see this account number when ordering. Set the advance to 0 to turn the advance off.",needacct:"Enter the account number",scan:"Scan this QR code to get the account number",savefail:"Could not save — run the new SQL in Supabase, or sign in again as admin"},
 ur:{ttl:"🌿 آبِ خضری",c:"🛒 کسٹمر",u:"🧑‍💼 یوزر",a:"🛡️ ایڈمن",tag:"کھانے کے بعد ہاضمہ بہتر بنائیں · گیس، بدہضمی اور تیزابیت سے آرام · 100% قدرتی",per:"/ بوتل",o1:"12 بوتلوں پر 2 فری",o2:"120+ بوتلوں پر 200 روپے فی بوتل",place:"آرڈر کریں",nm:"آپ کا نام",ph:"فون نمبر",ad:"پتہ",bt:"بوتلیں",send:"✅ آرڈر بھیجیں",
 fill:"براہ کرم تمام معلومات بھریں",got:"🎉 <b>آرڈر مل گیا!</b><br>آرڈر نمبر:",thx:"ہماری ٹیم جلد آپ سے رابطہ کرے گی 💚",sent:"آرڈر بھیج دیا گیا ✔",
 new:"نیا (یوزر کے پاس)",submitted:"منظوری کا انتظار",approved:"منظور شدہ ✔",rejected:"مسترد",
@@ -106,7 +1005,7 @@ bot:"بوتلیں",fr:"فری",tot:"کل",free2:"🎁 آپ کو {f} بوتلیں
 up:"🧑‍💼 یوزر پینل",nw:"📥 نئے کسٹمر آرڈرز",sub:"ایڈمن کو بھیجیں",wait:"⏳ منظوری کے انتظار میں",gen:"✔ تیار شدہ آرڈرز",pr:"🖨️ پرنٹ",none:"کوئی نیا آرڈر نہیں 🌱",gnone:"ایڈمن کی منظوری کے بعد یہاں نظر آئے گا",rej:"✖ مسترد",
 ap:"🛡️ ایڈمن پینل",all:"کل آرڈرز",pend:"زیرِ التوا",appr:"منظور شدہ",forap:"⏳ منظوری کے لیے",ok:"✔ منظور کریں",no:"✖ مسترد کریں",hist:"📜 ہسٹری",clear:"کوئی آرڈر باقی نہیں 🎉",
 t1:"ایڈمن کو بھیج دیا گیا",t2:"منظور — یوزر کے لیے آرڈر تیار ✔",t3:"مسترد کر دیا",
-min6:"کم از کم 6 بوتلیں آرڈر کرنا ضروری ہے",taxl:"ٹیکس",o3:"کم از کم 6 بوتلیں · 6 سے اوپر پر ٹیکس",dlv:"پورے پاکستان میں ہوم ڈیلیوری",taxh:"💰 6 سے اوپر کی بوتلوں پر ٹیکس (%)",rmo:"میری لسٹ سے ہٹائیں",rmq:"یہ آرڈر اپنی لسٹ سے ہٹائیں؟ دکان کے پاس ریکارڈ محفوظ رہے گا۔",cdl:"کسٹمر نے اپنی لسٹ سے ہٹا دیا (ریکارڈ محفوظ)",m6:"کم از کم 6",m6h:"کم از کم 6 بوتلیں آرڈر ہوں گی۔ 1 سے 5 بوتلیں آرڈر نہیں ہو سکتیں۔ ٹیکس صرف 6 سے اوپر کی بوتلوں پر لگے گا۔",chg:"✏️ ایڈریس بدلیں",na:"درست ایڈریس لکھیں",oa:"پرانا ایڈریس",nad:"نیا ایڈریس",adok:"ایڈریس اپڈیٹ ہو گیا ✔",lock:"بہت زیادہ غلط کوششیں — 15 منٹ کے لیے بند",exp:"سیشن ختم ہو گیا — دوبارہ لاگ اِن کریں",pwl:"پاسورڈ کم از کم 6 حروف کا ہو (اور آئی ڈی جیسا نہ ہو)",lim:"بہت زیادہ درخواستیں — بعد میں کوشش کریں",slg:"🔒 سیکیورٹی لاگ",wa:"💬 واٹس ایپ",fg:"پاسورڈ بھول گئے؟",bk:"← واپس لاگ اِن",rcl:"ریکوری کوڈ",fgad:"اپنی آئی ڈی، ریکوری کوڈ اور نیا پاسورڈ لکھیں۔",fgcu:"اپنا نمبر اور نیا پاسورڈ لکھیں۔ دکان والے منظور کریں گے، پھر نئے پاسورڈ سے داخل ہوں۔",fgus:"اپنی آئی ڈی اور نیا پاسورڈ لکھیں۔ ایڈمن منظور کرے گا، پھر نئے پاسورڈ سے داخل ہوں۔",fgs:"ری سیٹ کی درخواست بھیجیں",fgok:"درخواست بھیج دی — منظوری کا انتظار کریں",nf:"یہ آئی ڈی / نمبر رجسٹر نہیں ہے",rq:"🔑 پاسورڈ ری سیٹ کی درخواستیں",rch:"🛟 ایڈمن ریکوری کوڈ",rcon:"ریکوری کوڈ لگ چکا ہے ✔",rcoff:"⚠️ ابھی نہیں لگا — ابھی لگا لیں، ورنہ ایڈمن پاسورڈ بھولنے پر واپس نہیں مل سکے گا",rcs:"کوڈ کم از کم 4 حروف کا ہو",rs:"ری سیٹ",sl:"آرڈر سلپ",no2:"آرڈر نمبر",dt:"تاریخ",rate:"ریٹ",thanks:"شکریہ 💚 قدرتی ہاضمہ، صحت مند زندگی",sc:"کسٹمر آرڈر",su:"یوزر",sa:"ایڈمن",mu2:"👥 یوزرز کا انتظام",nuid:"نیا یوزر آئی ڈی",add:"➕ یوزر شامل کریں",rm:"ہٹائیں",np:"نیا پاسورڈ",rs:"ایڈمن پاسورڈ ری سیٹ کریں",sv:"محفوظ کریں",done:"محفوظ ہو گیا ✔",dup:"ڈپلیکیٹ نمبر — یہ نمبر / آئی ڈی پہلے سے رجسٹر ہے",need:"آئی ڈی اور پاسورڈ لکھیں",nousr:"ابھی کوئی یوزر نہیں",lg:"لاگ اِن",uid:"آئی ڈی",pwd:"پاسورڈ",si:"داخل ہوں",bad:"آئی ڈی یا پاسورڈ غلط ہے",out:"لاگ آؤٹ 🚪",la:"ایڈمن لاگ اِن",lu:"یوزر لاگ اِن",rp:"آرڈر رپورٹ",day:"دن",mon:"مہینہ",sd:"📊 ڈیش بورڈ",ss:"📑 شیٹ",sa2:"⏳ منظوری",sc2:"👥 اکاؤنٹس",sp:"🔑 پاسورڈ",sn:"📥 آرڈرز",dx:"⬇️ ایکسل ڈاؤن لوڈ",nodl:"یہاں ڈاؤن لوڈ ممکن نہیں",badph:"درست فون نمبر لکھیں (+92 کے بعد 10 ہندسے)",od:"آرڈرز",pwn:"🔑 میرا پاسورڈ بدلیں",rev:"آمدنی",st2:"حالت",lc:"کسٹمر لاگ اِن",rg:"کسٹمر اکاؤنٹ بنائیں",newc:"نئے کسٹمر؟ اکاؤنٹ بنائیں",have:"اکاؤنٹ موجود ہے؟ لاگ اِن کریں",myo:"📦 میرے آرڈرز",m_admin:"🛡️ ایڈمنز",m_user:"🧑‍💼 یوزرز",m_customer:"🛒 کسٹمرز",upsert:"ایک آئی ڈی دو بار نہیں بن سکتی۔ پاسورڈ بدلنے کے لیے ری سیٹ دبائیں۔",last:"آخری ایڈمن کو ہٹایا نہیں جا سکتا",selfx:"آپ خود کو نہیں ہٹا سکتے",adv:"ایڈوانس (پہلے ادا کرنا ضروری)",advn:"ایڈوانس ادا",rem:"باقی رقم (ڈیلیوری پر)",payto:"ایڈوانس اس اکاؤنٹ میں بھیجیں",acn:"اکاؤنٹ نمبر",acname:"اکاؤنٹ کا نام",bank:"بینک / والٹ",txn:"ایڈوانس کی ٹرانزیکشن آئی ڈی",txnh:"پہلے ایڈوانس بھیجیں، پھر یہاں ٹرانزیکشن آئی ڈی لکھیں۔ اس کے بغیر آرڈر نہیں بھیجا جا سکتا۔",txnneed:"ایڈوانس کی ٹرانزیکشن آئی ڈی لکھیں",nopay:"ادائیگی کا اکاؤنٹ ابھی سیٹ نہیں — دکان سے رابطہ کریں",advfail:"آرڈر بھیج دیا گیا، مگر ایڈوانس محفوظ نہیں ہو سکا — دکان سے رابطہ کریں",payh:"💳 ایڈوانس ادائیگی کا اکاؤنٹ",advamt:"ایڈوانس رقم (₨)",cpy:"📋 کاپی",cpd:"کاپی ہو گیا ✔",noadv:"⚠️ ایڈوانس درج نہیں",tn:"ٹرانزیکشن آئی ڈی",adv1:"ایڈوانس",ahint:"آرڈر کرتے وقت کسٹمر کو یہ اکاؤنٹ نمبر نظر آئے گا۔ ایڈوانس 0 کرنے سے ایڈوانس بند ہو جائے گا۔",needacct:"اکاؤنٹ نمبر لکھیں"}};
+min6:"کم از کم 6 بوتلیں آرڈر کرنا ضروری ہے",taxl:"ٹیکس",o3:"کم از کم 6 بوتلیں · 6 سے اوپر پر ٹیکس",dlv:"پورے پاکستان میں ہوم ڈیلیوری",taxh:"💰 6 سے اوپر کی بوتلوں پر ٹیکس (%)",rmo:"میری لسٹ سے ہٹائیں",rmq:"یہ آرڈر اپنی لسٹ سے ہٹائیں؟ دکان کے پاس ریکارڈ محفوظ رہے گا۔",cdl:"کسٹمر نے اپنی لسٹ سے ہٹا دیا (ریکارڈ محفوظ)",m6:"کم از کم 6",m6h:"کم از کم 6 بوتلیں آرڈر ہوں گی۔ 1 سے 5 بوتلیں آرڈر نہیں ہو سکتیں۔ ٹیکس صرف 6 سے اوپر کی بوتلوں پر لگے گا۔",chg:"✏️ ایڈریس بدلیں",na:"درست ایڈریس لکھیں",oa:"پرانا ایڈریس",nad:"نیا ایڈریس",adok:"ایڈریس اپڈیٹ ہو گیا ✔",lock:"بہت زیادہ غلط کوششیں — 15 منٹ کے لیے بند",exp:"سیشن ختم ہو گیا — دوبارہ لاگ اِن کریں",pwl:"پاسورڈ کم از کم 6 حروف کا ہو (اور آئی ڈی جیسا نہ ہو)",lim:"بہت زیادہ درخواستیں — بعد میں کوشش کریں",slg:"🔒 سیکیورٹی لاگ",wa:"💬 واٹس ایپ",fg:"پاسورڈ بھول گئے؟",bk:"← واپس لاگ اِن",rcl:"ریکوری کوڈ",fgad:"اپنی آئی ڈی، ریکوری کوڈ اور نیا پاسورڈ لکھیں۔",fgcu:"اپنا نمبر اور نیا پاسورڈ لکھیں۔ دکان والے منظور کریں گے، پھر نئے پاسورڈ سے داخل ہوں۔",fgus:"اپنی آئی ڈی اور نیا پاسورڈ لکھیں۔ ایڈمن منظور کرے گا، پھر نئے پاسورڈ سے داخل ہوں۔",fgs:"ری سیٹ کی درخواست بھیجیں",fgok:"درخواست بھیج دی — منظوری کا انتظار کریں",nf:"یہ آئی ڈی / نمبر رجسٹر نہیں ہے",rq:"🔑 پاسورڈ ری سیٹ کی درخواستیں",rch:"🛟 ایڈمن ریکوری کوڈ",rcon:"ریکوری کوڈ لگ چکا ہے ✔",rcoff:"⚠️ ابھی نہیں لگا — ابھی لگا لیں، ورنہ ایڈمن پاسورڈ بھولنے پر واپس نہیں مل سکے گا",rcs:"کوڈ کم از کم 4 حروف کا ہو",rs:"ری سیٹ",sl:"آرڈر سلپ",no2:"آرڈر نمبر",dt:"تاریخ",rate:"ریٹ",thanks:"شکریہ 💚 قدرتی ہاضمہ، صحت مند زندگی",sc:"کسٹمر آرڈر",su:"یوزر",sa:"ایڈمن",mu2:"👥 یوزرز کا انتظام",nuid:"نیا یوزر آئی ڈی",add:"➕ یوزر شامل کریں",rm:"ہٹائیں",np:"نیا پاسورڈ",rs:"ایڈمن پاسورڈ ری سیٹ کریں",sv:"محفوظ کریں",done:"محفوظ ہو گیا ✔",dup:"ڈپلیکیٹ نمبر — یہ نمبر / آئی ڈی پہلے سے رجسٹر ہے",need:"آئی ڈی اور پاسورڈ لکھیں",nousr:"ابھی کوئی یوزر نہیں",lg:"لاگ اِن",uid:"آئی ڈی",pwd:"پاسورڈ",si:"داخل ہوں",bad:"آئی ڈی یا پاسورڈ غلط ہے",out:"لاگ آؤٹ 🚪",la:"ایڈمن لاگ اِن",lu:"یوزر لاگ اِن",rp:"آرڈر رپورٹ",day:"دن",mon:"مہینہ",sd:"📊 ڈیش بورڈ",ss:"📑 شیٹ",sa2:"⏳ منظوری",sc2:"👥 اکاؤنٹس",sp:"🔑 پاسورڈ",sn:"📥 آرڈرز",dx:"⬇️ ایکسل ڈاؤن لوڈ",nodl:"یہاں ڈاؤن لوڈ ممکن نہیں",badph:"درست فون نمبر لکھیں (+92 کے بعد 10 ہندسے)",od:"آرڈرز",pwn:"🔑 میرا پاسورڈ بدلیں",rev:"آمدنی",st2:"حالت",lc:"کسٹمر لاگ اِن",rg:"کسٹمر اکاؤنٹ بنائیں",newc:"نئے کسٹمر؟ اکاؤنٹ بنائیں",have:"اکاؤنٹ موجود ہے؟ لاگ اِن کریں",myo:"📦 میرے آرڈرز",m_admin:"🛡️ ایڈمنز",m_user:"🧑‍💼 یوزرز",m_customer:"🛒 کسٹمرز",upsert:"ایک آئی ڈی دو بار نہیں بن سکتی۔ پاسورڈ بدلنے کے لیے ری سیٹ دبائیں۔",last:"آخری ایڈمن کو ہٹایا نہیں جا سکتا",selfx:"آپ خود کو نہیں ہٹا سکتے",adv:"ایڈوانس (پہلے ادا کرنا ضروری)",advn:"ایڈوانس ادا",rem:"باقی رقم (ڈیلیوری پر)",payto:"ایڈوانس اس اکاؤنٹ میں بھیجیں",acn:"اکاؤنٹ نمبر",acname:"اکاؤنٹ کا نام",bank:"بینک / والٹ",txn:"ایڈوانس کی ٹرانزیکشن آئی ڈی",txnh:"پہلے ایڈوانس بھیجیں، پھر یہاں ٹرانزیکشن آئی ڈی لکھیں۔ اس کے بغیر آرڈر نہیں بھیجا جا سکتا۔",txnneed:"ایڈوانس کی ٹرانزیکشن آئی ڈی لکھیں",nopay:"ادائیگی کا اکاؤنٹ ابھی سیٹ نہیں — دکان سے رابطہ کریں",advfail:"آرڈر بھیج دیا گیا، مگر ایڈوانس محفوظ نہیں ہو سکا — دکان سے رابطہ کریں",payh:"💳 ایڈوانس ادائیگی کا اکاؤنٹ",advamt:"ایڈوانس رقم (₨)",cpy:"📋 کاپی",cpd:"کاپی ہو گیا ✔",noadv:"⚠️ ایڈوانس درج نہیں",tn:"ٹرانزیکشن آئی ڈی",adv1:"ایڈوانس",ahint:"آرڈر کرتے وقت کسٹمر کو یہ اکاؤنٹ نمبر نظر آئے گا۔ ایڈوانس 0 کرنے سے ایڈوانس بند ہو جائے گا۔",needacct:"اکاؤنٹ نمبر لکھیں",scan:"اکاؤنٹ نمبر کے لیے یہ QR کوڈ اسکین کریں",savefail:"محفوظ نہیں ہو سکا — Supabase میں نئی SQL چلائیں، یا ایڈمن کے طور پر دوبارہ لاگ اِن کریں"}};
 let L=localStorage.getItem("aab_lang")||"ur";
 const t=k=>T[L][k];
 function toggleLang(){L=L==="ur"?"en":"ur";try{localStorage.setItem("aab_lang",L)}catch(e){}render(true)}
@@ -165,9 +1064,10 @@ const $=s=>document.querySelector(s);
 const payTot=q=>q*rate(q)+taxOf(q),advOf=tot=>Math.min(st.pay.adv||0,tot);
 const advN=o=>+((st.adv[o.id]||{}).amt)||0,remN=o=>st.adv[o.id]?Math.max(o.total-advN(o),0):o.total;
 function copyAcct(){const a=st.pay.acct;try{navigator.clipboard.writeText(a).then(()=>toast(t("cpd")),()=>toast(a))}catch(e){toast(a)}}
+function qrSvg(x){try{const q=new QRC(-1,QRL.M);q.addData(String(x));q.make();const n=q.getModuleCount(),m=3;let d="";for(let r=0;r<n;r++)for(let c=0;c<n;c++)if(q.isDark(r,c))d+=`M${c+m},${r+m}h1v1h-1z`;return `<svg viewBox="0 0 ${n+2*m} ${n+2*m}" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges" style="width:200px;max-width:75%;background:#fff;border-radius:12px"><path d="${d}" fill="#000"/></svg>`}catch(e){return""}}
 function payInfo(q){const A=st.pay.adv||0;if(A<=0)return"";const tot=payTot(q),ad=advOf(tot),p=st.pay;
   if(!p.acct)return `<div class="tot" style="color:#d98a00">⚠️ ${t("nopay")}</div>`;
-  return `<div class="tot" style="border:1.5px solid var(--y)"><b>💳 ${t("adv")}: <bdi dir="ltr">₨ ${ad}</bdi></b><br>${t("payto")}:<br>${p.bank?`<bdi dir="ltr">${esc(p.bank)}</bdi><br>`:""}${p.title?`${t("acname")}: <b>${esc(p.title)}</b><br>`:""}${t("acn")}: <b dir="ltr" style="font-size:17px;user-select:all">${esc(p.acct)}</b> <button type="button" class="pr" style="padding:4px 10px;font-size:12px" onclick="copyAcct()">${t("cpy")}</button><br><b style="color:var(--g)">${t("rem")}: <bdi dir="ltr">₨ ${tot-ad}</bdi></b></div>`}
+  return `<div class="tot" style="border:1.5px solid var(--y)"><b>💳 ${t("adv")}: <bdi dir="ltr">₨ ${ad}</bdi></b><br>${t("payto")}:<br>${p.bank?`<bdi dir="ltr">${esc(p.bank)}</bdi><br>`:""}${p.title?`${t("acname")}: <b>${esc(p.title)}</b><br>`:""}${t("acn")}: <b dir="ltr" style="font-size:17px;user-select:all">${esc(p.acct)}</b> <button type="button" class="pr" style="padding:4px 10px;font-size:12px" onclick="copyAcct()">${t("cpy")}</button><br><b style="color:var(--g)">${t("rem")}: <bdi dir="ltr">₨ ${tot-ad}</bdi></b><div style="text-align:center;margin-top:12px">${qrSvg(p.acct)}<div class="mu">${t("scan")}</div></div></div>`}
 const advHtml=o=>{const a=st.adv[o.id];if(a)return `<div class="mu" style="margin-top:6px">💳 ${t("advn")}: <bdi dir="ltr">₨ ${advN(o)}</bdi> · ${t("tn")}: <bdi dir="ltr">${esc(a.txn||"")}</bdi><br><b>${t("rem")}: <bdi dir="ltr">₨ ${remN(o)}</bdi></b></div>`;return (S.r==="admin"||S.r==="user")&&(o.status==="new"||o.status==="submitted")?`<div class="mu" style="margin-top:6px;color:#d98a00">${t("noadv")}</div>`:""};
 const slipAdv=o=>st.adv[o.id]?`<br>${t("advn")}: ₨ ${advN(o)}<br><b style="font-size:18px">${t("rem")}: ₨ ${remN(o)}</b>`:"";
 const waAdv=o=>st.adv[o.id]?`\n${t("advn")}: ₨${advN(o)}\n${t("rem")}: ₨${remN(o)}`:"";
@@ -304,7 +1204,7 @@ async function setTax(){try{const v=parseFloat($("#txp").value);if(!(v>=0&&v<=10
 const pwBox=()=>`<div class="card"><h2>${t("pwn")}</h2><label>${t("np")}</label>${pwf("mp",'autocomplete="new-password"')}<button class="big" style="background:#0b5fa5" onclick="myPw()">${t("sv")}</button></div>`;
 const custBox=()=>`<div class="card"><h2>${t("m_customer")} (${lst("customer").length})</h2>${lst("customer").map(u=>`<div class="row" style="padding:8px 0;border-bottom:1px solid var(--bd)"><span dir="ltr">🛒 <b>${esc(u.name||"")}</b> · ${esc(u.id)}</span><span><button class="pr" data-r="customer" data-i="${esc(u.id)}" onclick="rstAcct(this.dataset.r,this.dataset.i)">${t("rs")}</button> <button class="no" data-r="customer" data-i="${esc(u.id)}" onclick="delAcct(this.dataset.r,this.dataset.i)">${t("rm")}</button></span></div>`).join("")||`<div class="empty">${t("nousr")}</div>`}</div>`;
 const payBox=()=>`<div class="card"><h2>${t("payh")}</h2><label>${t("bank")}</label><input id="pbk" dir="ltr" value="${esc(st.pay.bank)}"><label>${t("acname")}</label><input id="ptt" value="${esc(st.pay.title)}"><label>${t("acn")}</label><input id="pac" dir="ltr" value="${esc(st.pay.acct)}"><label>${t("advamt")}</label><input id="pad" type="number" min="0" step="1" dir="ltr" value="${st.pay.adv}"><div class="mu" style="margin-top:6px">${t("ahint")}</div><button class="big" style="background:#0b5fa5" onclick="setPay()">${t("sv")}</button></div>`;
-async function setPay(){try{const a=$("#pac").value.trim(),v=parseInt($("#pad").value,10);if(!(v>=0))return toast(t("bad"));if(v>0&&!a)return toast(t("needacct"));if(!await rpc("aab_set_pay",{p_id:S.i,p_h:S.h,p_title:$("#ptt").value.trim(),p_acct:a,p_bank:$("#pbk").value.trim(),p_adv:v}))return toast(t("bad"));await refresh();render(true);toast(t("done"))}catch(e){toast("Network error")}}
+async function setPay(){try{const a=$("#pac").value.trim(),v=parseInt($("#pad").value,10);if(!(v>=0))return toast(t("bad"));if(v>0&&!a)return toast(t("needacct"));if(!await rpc("aab_set_pay",{p_id:S.i,p_h:S.h,p_title:$("#ptt").value.trim(),p_acct:a,p_bank:$("#pbk").value.trim(),p_adv:v}))return toast(t("savefail"));await refresh();render(true);toast(t("done"))}catch(e){toast(e&&e.message?e.message:"Network error")}}
 function user(){return outBtn()+`<h2>${t("up")}</h2>`+tabs("user",[["dash",t("sd")],["new",t("sn")],["sheet",t("ss")],["pw",t("sp")+(st.resets.length?" ("+st.resets.length+")":"")]])+({dash,new:userNew,sheet,pw:()=>rsBox()+pwBox()})[SEC.user]()}
 function admin(){return outBtn()+`<h2>${t("ap")}</h2>`+tabs("admin",[["dash",t("sd")],["appr",t("sa2")+" ("+by("submitted").length+")"],["sheet",t("ss")],["acct",t("sc2")+(st.resets.length?" ("+st.resets.length+")":"")],["log",t("slg")]])+({dash,appr:adminAppr,sheet,log:auditView,acct:()=>rsBox()+payBox()+taxBox()+rcBox()+pwBox()+acctBox("admin")+acctBox("user")+custBox()})[SEC.admin]()}
 function adminAppr(){const s=by("submitted");return `<h2 style="font-size:16px">${t("forap")} (${s.length})</h2>`+(s.map(o=>card(o,`<button class="ok" onclick="setS('${o.id}','approved')">${t("ok")}</button><button class="no" onclick="setS('${o.id}','rejected')">${t("no")}</button>`)).join("")||`<div class="empty">${t("clear")}</div>`)}
