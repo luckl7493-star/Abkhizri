@@ -1,4 +1,4 @@
--- Aab-e-Khizri v2.3 — advance payment (run ONCE in Supabase > SQL Editor)
+-- Aab-e-Khizri v2.3 - advance payment (run ONCE in Supabase > SQL Editor)
 -- Admin/user/customer checks reuse your existing aab_orders_list(), which returns NULL on bad credentials.
 
 create table if not exists aab_pay_settings(
@@ -23,8 +23,8 @@ create or replace function aab_set_pay(p_id text,p_h text,p_title text,p_acct te
 returns boolean language plpgsql security definer set search_path=public as $$
 declare o jsonb;
 begin
-  o := aab_orders_list(p_role=>'admin',p_id=>p_id,p_h=>p_h)::jsonb;
-  if o is null or jsonb_typeof(o)='null' then return false; end if;
+  o := aab_accounts_list(p_id=>p_id,p_h=>p_h)::jsonb;   -- admin-only list your app already uses
+  if o is null or jsonb_typeof(o)<>'array' or jsonb_array_length(o)=0 then return false; end if;
   if p_adv is null or p_adv<0 or p_adv>1000000 then return false; end if;
   update aab_pay_settings set title=left(coalesce(p_title,''),80), acct=left(coalesce(p_acct,''),60),
          bank=left(coalesce(p_bank,''),60), adv=p_adv where id=1;
@@ -58,3 +58,6 @@ begin
     where p_role in ('admin','user')
        or exists(select 1 from jsonb_array_elements(o) e where e->>'id'=a.oid)),'[]'::json);
 end $$;
+
+-- make the API see the new functions immediately
+notify pgrst, 'reload schema';
