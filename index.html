@@ -2,7 +2,7 @@
 <html lang="en" data-theme="light"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>آبِ خضری | Aab-e-Khizri</title>
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://ceakufmcdxaxrnfzglto.supabase.co; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; frame-src 'none'"><meta name="referrer" content="no-referrer"><script>(function(){function p(){var h=location.hash.slice(1);return h==="admin"?"manifest-admin.json":h==="user"?"manifest-user.json":"manifest.json"}document.write('<link rel="manifest" id="mf" href="'+p()+'">');addEventListener("hashchange",function(){document.getElementById("mf").setAttribute("href",p())})})()</script><meta name="theme-color" content="#a5d3ee"><link rel="apple-touch-icon" href="apple-touch-icon-v2.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Aab-e-Khizri">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://ceakufmcdxaxrnfzglto.supabase.co; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; frame-src 'none'"><meta name="referrer" content="no-referrer"><script>(function(){function p(){var h=location.hash.slice(1);return h==="admin"?"manifest-admin.json":h==="user"?"manifest-user.json":"manifest.json"}document.write('<link rel="manifest" id="mf" href="'+p()+'">');var cur0=p();addEventListener("hashchange",function(){if(p()!==cur0)location.reload()})})()</script><meta name="theme-color" content="#a5d3ee"><link rel="apple-touch-icon" href="apple-touch-icon-v2.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Aab-e-Khizri">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@600&family=Noto+Naskh+Arabic:wght@400;600;700&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#f3f8ee;--card:#fff;--tx:#17301c;--mu:#5d7262;--g:#1f6b34;--g2:#2f8f47;--r:#b3141b;--y:#f6c32b;--bd:#dce9d4;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -1178,7 +1178,7 @@ const advHtml=o=>{const a=st.adv[o.id];if(a)return `<div class="mu" style="margi
 const slipAdv=o=>st.adv[o.id]?`<br>${t("advn")}: ₨ ${advN(o)}<br><b style="font-size:18px">${t("rem")}: ₨ ${remN(o)}</b>`:"";
 const waAdv=o=>st.adv[o.id]?`\n${t("advn")}: ₨${advN(o)}\n${t("rem")}: ₨${remN(o)}`:"";
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-function toast(m){const e=$("#toast");e.textContent=m;e.style.display="block";setTimeout(()=>e.style.display="none",2200)}
+let _tt;function toast(m,ms){const e=$("#toast");e.textContent=m;e.style.display="block";e.style.zIndex=120;clearTimeout(_tt);_tt=setTimeout(()=>e.style.display="none",ms||2200)}
 
 let dip=null;const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent),isApp=matchMedia("(display-mode: standalone)").matches||navigator.standalone;
 function syncInst(){const show=!isApp&&!window.__instDone;const b=$("#inst");b.style.display=show?"":"none";b.textContent="📲 "+(L==="ur"?"ایپ انسٹال کریں":"Install App");
@@ -1187,10 +1187,15 @@ function syncInst(){const show=!isApp&&!window.__instDone;const b=$("#inst");b.s
 addEventListener("beforeinstallprompt",e=>{e.preventDefault();dip=e;syncInst()});
 addEventListener("appinstalled",()=>{dip=null;window.__instDone=1;syncInst()});
 
-async function installApp(){if(!dip&&!isIOS)await new Promise(r=>setTimeout(r,1200));
- if(dip){dip.prompt();try{const r=await dip.userChoice;if(r&&r.outcome==="accepted")window.__instDone=1}catch(e){}dip=null;syncInst()}
- else if(isIOS)toast(L==="ur"?"Safari: Share ← Add to Home Screen":"Safari: Share → Add to Home Screen");
- else toast(L==="ur"?"اس لنک کو Chrome میں https پر کھولیں":"Open this https link in Chrome")}
+async function installApp(){if(!dip&&!isIOS)await new Promise(r=>setTimeout(r,1500));
+ if(dip){dip.prompt();try{const r=await dip.userChoice;if(r&&r.outcome==="accepted")window.__instDone=1}catch(e){}dip=null;syncInst();return}
+ if(isIOS){toast(L==="ur"?"Safari: Share ← Add to Home Screen":"Safari: Share → Add to Home Screen",5000);return}
+ const ur=L==="ur";
+ if(!window.isSecureContext||!navigator.serviceWorker){toast(ur?"سائٹ https پر کھولیں":"Open the site over https",6000);return}
+ const mf=document.getElementById("mf").getAttribute("href");
+ try{const r=await fetch(mf,{cache:"no-store"});if(!r.ok){toast((ur?"فائل نہیں ملی: ":"File missing on server: ")+mf+" ("+r.status+")",7000);return}}catch(e){}
+ try{const r=await fetch("sw.js",{cache:"no-store"});if(!r.ok){toast((ur?"فائل نہیں ملی: ":"File missing on server: ")+"sw.js ("+r.status+")",7000);return}}catch(e){}
+ toast(ur?"Chrome میں کھولیں، پھر صفحہ ایک بار ریفریش کر کے دوبارہ دبائیں":"Open in Chrome, refresh the page once, then tap again",6000)}
 function instHelp(){const ur=L==="ur",ua=navigator.userAgent,ios=isIOS,and=/android/i.test(ua),inapp=/FBAN|FBAV|Instagram|WhatsApp|Line\/|; wv\)/i.test(ua);
  const st=ios?(ur?["Safari میں نیچے Share (⬆️) دبائیں","'Add to Home Screen' چنیں","Add دبائیں"]:["In Safari tap Share (⬆️) at the bottom","Choose 'Add to Home Screen'","Tap Add"]):and?(ur?["Chrome میں اوپر ⋮ مینو دبائیں","'Install app' یا 'Add to Home screen' چنیں","Install دبائیں"]:["In Chrome tap the ⋮ menu","Choose 'Install app' or 'Add to Home screen'","Tap Install"]):(ur?["ایڈریس بار میں انسٹال آئیکن (⊕) دبائیں","یا ⋮ مینو ← Install"]:["Click the install icon (⊕) in the address bar","Or ⋮ menu → Install"]);
  const note=inapp?(ur?"⚠️ یہ پیج WhatsApp/Facebook کے اندر کھلا ہے۔ اسے Chrome (iPhone پر Safari) میں کھولیں۔":"⚠️ This page is open inside WhatsApp/Facebook. Open it in Chrome (Safari on iPhone)."):"";
@@ -1318,8 +1323,13 @@ function fold(k,h){const m=h.match(/^(<div class="card">)(<h2[^>]*>[\s\S]*?<\/h2
 const foldBar=()=>{const all=foldSet().size>=FK.length;return `<div class="hbar"><button onclick="foldAll(${!all})">${all?"👁️ "+t("sall"):"🙈 "+t("hall")}</button></div>`};
 const by=s=>st.orders.filter(o=>o.status===s&&(SHOWH||!isHid(o.id)));
 const cxBtn=o=>`<button class="no" onclick="cancelO('${o.id}')">${t("cxl")}</button>`;
-async function cancelO(id){try{if(!confirm(t("cxq")))return;const go=async st2=>{try{return await rpc("aab_set_status",{p_role:S.r,p_id:S.i,p_h:S.h,p_oid:id,p_status:st2})}catch(e){return false}};
- let ok=await go("cancelled"),fb=false;if(!ok){ok=await go("rejected");fb=true}await refresh();render(true);toast(ok?t(fb?"cxfb":"t4"):t("bad"),fb?4000:2200)}catch(e){toast("Network error")}}
+function confirmBox(msg){return new Promise(res=>{const o=document.createElement("div");o.style.cssText="position:fixed;inset:0;background:#000a;z-index:99;display:flex;align-items:center;justify-content:center;padding:18px";o.innerHTML=`<div class="card" style="max-width:360px;width:100%;margin:0;text-align:center"><h2>${esc(msg)}</h2><div class="row" style="justify-content:center;gap:10px;margin-top:10px"><button class="no" id="cfN">${L==="ur"?"نہیں":"No"}</button><button class="ok" id="cfY">${L==="ur"?"ہاں":"Yes"}</button></div></div>`;document.body.appendChild(o);o.querySelector("#cfY").onclick=()=>{o.remove();res(true)};o.querySelector("#cfN").onclick=()=>{o.remove();res(false)}})}
+async function rpcE(fn,a){const r=await fetch(SB+"/rest/v1/rpc/"+fn,{method:"POST",headers:{apikey:KEY,Authorization:"Bearer "+KEY,"Content-Type":"application/json"},body:JSON.stringify(a)});const tx=await r.text();let j=null;try{j=JSON.parse(tx)}catch(e){}return{ok:r.ok,data:j,err:(j&&(j.message||j.hint))||tx}}
+async function cancelO(id){try{if(!await confirmBox(t("cxq")))return;
+ const go=st2=>rpcE("aab_set_status",{p_role:S.r,p_id:S.i,p_h:S.h,p_oid:id,p_status:st2});
+ let r=await go("cancelled"),fb=false;
+ if(!(r.ok&&r.data)){const r2=await go("rejected");if(r2.ok&&r2.data){r=r2;fb=true}else{toast((L==="ur"?"منسوخ نہیں ہوا: ":"Cancel failed: ")+String(r.err||r2.err||"").slice(0,140),7000);return}}
+ await refresh();render(true);toast(t(fb?"cxfb":"t4"),fb?4000:2200)}catch(e){toast("Network error")}}
 function userNew(){const sec=SEC.user,n=by("new"),s=by("submitted"),r=by("rejected"),c=by("cancelled"),a=by("approved"),H=x=>`<h2 style="font-size:16px">${x}</h2>`,E=`<div class="empty">—</div>`;
  if(sec==="wait")return hidBar()+H(`${t("wait")} (${s.length})`)+(s.map(o=>card(o,cxBtn(o))).join("")||E);
  if(sec==="done")return hidBar()+H(`${t("gen")} / ${t("rp")} (${a.length})`)+(a.map(o=>card(o,`<button class="pr" onclick="slip('${o.id}')">${t("pr")}</button>`+waBtn(o))).join("")||`<div class="empty">${t("gnone")}</div>`)+(r.length?H(t("rej"))+r.map(o=>card(o,"")).join(""):"")+(c.length?H("🚫 "+t("cancelled")+" ("+c.length+")")+c.map(o=>card(o,"")).join(""):"")+`<div id="slipbox"></div>`;
